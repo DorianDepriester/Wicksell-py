@@ -115,25 +115,8 @@ class wickselled_trans(stats.rv_continuous):
     def _fitstart(self, data, args=None):
         return self.basedist._fitstart(data, args=args)
 
-    def logpdf(self, x, *args, **kwargs):
-        return np.log(self.pdf(x, *args, **kwargs))
+    def freeze(self, *args, **kwds):
+        return rv_wickselled_frozen(self, *args, **kwds)
 
-    def _nnlf(self, x, *args, **kwargs):
-        return -np.sum(self._logpdf(x, *args, **kwargs), axis=0)
-
-    def nnlf(self, theta, x):
-        try:
-            loc = theta[-2]
-            scale = theta[-1]
-            args = tuple(theta[:-2])
-        except IndexError:
-            raise ValueError("Not enough input arguments.")
-        if not self._argcheck(*args) or scale <= 0:
-            return inf
-        x = asarray((x-loc) / scale)
-        cond0 = (x <= self.a) | (self.b <= x)
-        if (any(cond0)):
-            return inf
-        else:
-            N = len(x)
-            return self._nnlf(x, *args, **kwargs) + N * log(scale)
+    def __call__(self, *args, **kwds):
+        return self.freeze(*args, **kwds)
