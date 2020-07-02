@@ -12,7 +12,13 @@ import scipy.integrate as integrate
 from numbers import Number as num
 
 class wickselled_trans(stats.rv_continuous):
-    "Wicksell's transform of a mixture of two normal distributions"
+    """
+    Wicksell's transform of a given distribution.
+
+    Reference:
+     - Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
+     - Depriester D and Kubler R (2019), doi:10.5566/ias.2133
+    """
     
     def __init__(self, basedist, nint=500, eps=1e-3, **kwargs):
         self.basedist = basedist
@@ -27,25 +33,18 @@ class wickselled_trans(stats.rv_continuous):
         self._wicksellvec = np.vectorize(self._wicksell_single, otypes='d')
 
     def _argcheck(self, *args):
-        return self.basedist._argcheck(*args[:-2])
-
-    def _penalized_nnlf(self, theta, x):
-        return self.basedist._penalized_nnlf(theta[:-2], x)
+        """
+        Check that the argument passed to the base distribution are correct and that basescale
+        """
+        return self.basedist._argcheck(*args[:-2]) and (args[-1] > 0.0)
 
     def _parse_args(self, * args, **kwargs):
         return self.basedist._parse_args(*args)
 
-    def _parse_args(self, * args, **kwargs):
+    def _parse_args_rvs(self, * args, **kwargs):
         return self.basedist._parse_args_rvs(*args)
-
-    def _reduce_func(self, args, kwds):
-        args += (0.0, 1.0)
-        return self.basedist._reduce_func(args, kwds)
         
     def _wicksell_single(self, x, *args, **kwargs):
-        """
-        Analytical computation of the Probability Density Function
-        """
         E = self.basedist.mean(*args, **kwargs)
         if 0.0 < x:
             integrand=lambda R: self.basedist.pdf(R, *args, **kwargs)*(R**2-x**2)**(-0.5)
@@ -54,6 +53,7 @@ class wickselled_trans(stats.rv_continuous):
             return 0.0
         
     def _pdf(self, x, *args):
+        print(args)
         *args, baseloc, basescale = args
         if isinstance(x, num) or x.size == 1:
             return self._wicksellvec(x, *args, loc=baseloc, scale=basescale)
@@ -61,17 +61,18 @@ class wickselled_trans(stats.rv_continuous):
             if x.size < self.nint:
                 return [self._wicksellvec(xi, *args, loc=baseloc, scale=basescale) for xi in x]
             else:
-                loc0 = baseloc[0]
-                scale0 = basescale[0]
-                args = [args_i[0] for args_i in args]
-                x1 = self.basedist.isf(self.eps, *args, loc=loc0, scale=scale0)
+                if not isinstance(baseloc, num):
+                    baseloc = baseloc[0]
+                    basescale = basescale[0]
+                    args = [args_i[0] for args_i in args]
+                x1 = self.basedist.isf(self.eps, *args, loc=baseloc, scale=basescale)
                 x0 = 0.999 * x1
-                y0 = self._wicksellvec(x0, *args, loc=loc0, scale=scale0)
-                y1 = self._wicksellvec(x1, *args, loc=loc0, scale=scale0)
+                y0 = self._wicksellvec(x0, *args, loc=baseloc, scale=basescale)
+                y1 = self._wicksellvec(x1, *args, loc=baseloc, scale=basescale)
                 fp = (y1 - y0) / (x1 - x0)
                 a = fp / y1            
                 xp = np.linspace(np.min(x), np.max(x), self.nint)
-                yp = [self._wicksellvec(xi, *args, loc=loc0, scale=scale0) for xi in xp]
+                yp = [self._wicksellvec(xi, *args, loc=baseloc, scale=basescale) for xi in xp]
                 y = np.zeros(x.shape)
                 y[x <= x1] = np.interp(x[x <= x1], xp, yp)
                 y[x > x1] = y1 * np.exp(a * (x[x > x1] - x1))
@@ -104,11 +105,11 @@ class wickselled_trans(stats.rv_continuous):
         
     def _ppf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
         ppf_0 = self.basedist.ppf(p, *args, loc=baseloc, scale=basescale, **kwargs)
-        return opti.newton_krylov(lambda x: self._cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)-p, ppf_0)
+        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)-p, ppf_0)
 
     def isf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
         isf_0 = self.basedist.isf(p, *args, loc=baseloc, scale=basescale, **kwargs)
-        return opti.newton_krylov(lambda x: self._cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)+p-1, isf_0)
+        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)+p-1, isf_0)
     
     def rvs(self, *args, baseloc=0.0, basescale=1.0, size=None, **kwargs):
         if size is None:
@@ -131,23 +132,15 @@ class wickselled_trans(stats.rv_continuous):
             return np.sqrt(r2[:n_req]).reshape(size)
         else:
             return np.sqrt(r2).reshape(size)
-
-    # def pdf(self, x, *args, **kwargs):
-    #     baseloc=kwargs.get('baseloc', 0.0)
-    #     basescale=kwargs.get('basescale', 1.0)
-    #     return self._pdf(x, *args, baseloc, basescale)
-
-    # def cdf(self, x, *args, **kwargs):
-    #     baseloc=kwargs.get('baseloc', 0.0)
-    #     basescale=kwargs.get('basescale', 1.0)
-    #     return self._cdf(x, *args, baseloc, basescale)
     
     def _fitstart(self, data, args=None):
+        """
+        Here, we use the _fitstats method from the base distribution. Note that using this as an initial guess is a very
+        poor idea. Still, it ensures that each value in the initial guess are valid, i.e.:
+            self._argcheck(theta_0)==True
+        """
         theta_0 = self.basedist._fitstart(data, args=args)
-        return theta_0
+        return theta_0 + (0.0, 1.0)
 
-    def freeze(self, *args, **kwds):
-        return rv_wickselled_frozen(self, *args, **kwds)
-
-    def __call__(self, *args, **kwds):
-        return self.freeze(*args, **kwds)
+    def fit(self, data, *args, floc=0.0, fscale=1.0, **kwds):
+        return super().fit(data, *args, floc=floc, fscale=fscale, **kwds)
