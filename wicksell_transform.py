@@ -8,8 +8,31 @@ import scipy.stats as stats
 from scipy.stats._distn_infrastructure import rv_frozen
 import scipy.optimize as opti
 import numpy as np
+from numpy import sqrt, log
 import scipy.integrate as integrate
 from numbers import Number as num
+
+
+def pdf_uni(x, rmin, rmax):
+    return np.piecewise(x,
+                        [x <= 0.0, x <= rmin, (rmin < x) & (x <= rmax), rmax < x],
+                        [0.0,
+                         lambda r: 2 * r / (rmax ** 2 - rmin ** 2) * log(
+                             (rmax + sqrt(rmax ** 2 - r ** 2)) / (rmin + sqrt(rmin ** 2 - r ** 2))),
+                         lambda r: 2 * r / (rmax ** 2 - rmin ** 2) * log((rmax + sqrt(rmax ** 2 - r ** 2)) / r),
+                         0.0])
+
+
+def cdf_uni(x, rmin, rmax):
+    cond = [x <= 0.0, x <= rmin, (rmin < x) & (x <= rmax), rmax < x]
+    gamma = lambda r: rmax * sqrt(rmax ** 2 - r ** 2) - r ** 2 * log(rmax + sqrt(rmax ** 2 - r ** 2))
+    return np.piecewise(x, cond,
+                        [0.0,
+                         lambda r: 1 - (gamma(r) + r ** 2 * log(rmin + sqrt(rmin ** 2 - r ** 2))
+                                        - rmin * sqrt(rmin ** 2 - r ** 2)) / (rmax ** 2 - rmin ** 2),
+                         lambda r: 1 - (gamma(r) + r ** 2 * log(r)) / (rmax ** 2 - rmin ** 2),
+                         1.0])
+
 
 class wickselled_trans(stats.rv_continuous):
     """
@@ -19,7 +42,7 @@ class wickselled_trans(stats.rv_continuous):
      - Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
      - Depriester D and Kubler R (2019), doi:10.5566/ias.2133
     """
-    
+
     def __init__(self, basedist, nint=500, eps=1e-3, **kwargs):
         self.basedist = basedist
         self.nint = nint
@@ -40,15 +63,15 @@ class wickselled_trans(stats.rv_continuous):
         - the support of base distribution is a subset of [0, +inf]
         """
         return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args)[0] >= 0.0) and (args[-1] > 0.0)
-        
+
     def _wicksell_single(self, x, *args, **kwargs):
         E = self.basedist.mean(*args, **kwargs)
         if 0.0 < x:
-            integrand=lambda R: self.basedist.pdf(R, *args, **kwargs)*(R**2-x**2)**(-0.5)
-            return integrate.quad(integrand, x, np.inf)[0]*x/E
+            integrand = lambda R: self.basedist.pdf(R, *args, **kwargs) * (R ** 2 - x ** 2) ** (-0.5)
+            return integrate.quad(integrand, x, np.inf)[0] * x / E
         else:
             return 0.0
-        
+
     def _pdf(self, x, *args):
         *args, baseloc, basescale = args
         if isinstance(x, num) or x.size == 1:
@@ -66,14 +89,14 @@ class wickselled_trans(stats.rv_continuous):
                 y0 = self._wicksellvec(x0, *args, loc=baseloc, scale=basescale)
                 y1 = self._wicksellvec(x1, *args, loc=baseloc, scale=basescale)
                 fp = (y1 - y0) / (x1 - x0)
-                a = fp / y1            
+                a = fp / y1
                 xp = np.linspace(np.min(x), np.max(x), self.nint)
                 yp = [self._wicksellvec(xi, *args, loc=baseloc, scale=basescale) for xi in xp]
                 y = np.zeros(x.shape)
                 y[x <= x1] = np.interp(x[x <= x1], xp, yp)
                 y[x > x1] = y1 * np.exp(a * (x[x > x1] - x1))
                 return y
-    
+
     def _cdf(self, x, *args):
         *args, baseloc, basescale = args
         integrand = lambda r: self._wicksellvec(r, *args, loc=baseloc, scale=basescale)
@@ -94,19 +117,19 @@ class wickselled_trans(stats.rv_continuous):
     def _stats(self, *args):
         data = self.rvs(*args[:-2], baseloc=args[-2], basescale=args[-1], size=10000)
         return np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data)
-    
+
     def expect(self, *args, baseloc=0.0, basescale=1.0, **kwargs):
         integrand = lambda x: self._wicksellvec(x, *args, loc=baseloc, scale=basescale, **kwargs) * x
         return integrate.quad(integrand, 0, np.inf)[0]
-        
+
     def _ppf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
         ppf_0 = self.basedist.ppf(p, *args, loc=baseloc, scale=basescale, **kwargs)
-        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)-p, ppf_0)
+        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs) - p, ppf_0)
 
     def isf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
         isf_0 = self.basedist.isf(p, *args, loc=baseloc, scale=basescale, **kwargs)
-        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)+p-1, isf_0)
-    
+        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs) + p - 1, isf_0)
+
     def rvs(self, *args, size=None, **kwargs):
         if size is None:
             n_req = 1
@@ -118,10 +141,10 @@ class wickselled_trans(stats.rv_continuous):
             else:
                 init_size = n_req
         r = self.basedist.rvs(*args, size=init_size, **kwargs)
-        x_ref = np.cumsum(2*r) - r
-        x_pick = np.random.rand(init_size) * np.sum(2*r)
-        i = [np.argmin((x_pick_i-x_ref)**2 - r**2) for x_pick_i in x_pick]
-        r2 = r[i]**2 - (x_pick-x_ref[i])**2
+        x_ref = np.cumsum(2 * r) - r
+        x_pick = np.random.rand(init_size) * np.sum(2 * r)
+        i = [np.argmin((x_pick_i - x_ref) ** 2 - r ** 2) for x_pick_i in x_pick]
+        r2 = r[i] ** 2 - (x_pick - x_ref[i]) ** 2
         if n_req == 1:
             return np.sqrt(r2[0])
         elif n_req < 1000:
@@ -133,8 +156,8 @@ class wickselled_trans(stats.rv_continuous):
         statistics = self.stats(*args, moments='mvsk')
         d = 0.0
         for i, moment in enumerate(moments):
-            di = (statistics[i] - moments[i])**2
-            d += 1.0/(1.0 + i) * di
+            di = (statistics[i] - moments[i]) ** 2
+            d += 1.0 / (1.0 + i) * di
         return d
 
     def _fitstart(self, data, args=None):
@@ -154,4 +177,5 @@ class wickselled_trans(stats.rv_continuous):
 
         def func(theta):
             return self._moment_distance(moments, *theta)
+
         return opti.fmin(func, self._fitstart(data, args=args), args=(np.ravel(data),), disp=False)
