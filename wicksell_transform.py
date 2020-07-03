@@ -40,15 +40,6 @@ class wickselled_trans(stats.rv_continuous):
         - the support of base distribution is a subset of [0, +inf]
         """
         return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args)[0] >= 0.0) and (args[-1] > 0.0)
-
-    def _parse_args(self, * args, **kwargs):
-        return self.basedist._parse_args(*args)
-
-    def _parse_args_stats(self, * args, **kwargs):
-        return self.basedist._parse_args_stats(*args)
-
-    def _parse_args_rvs(self, * args, **kwargs):
-        return self.basedist._parse_args_rvs(*args)
         
     def _wicksell_single(self, x, *args, **kwargs):
         E = self.basedist.mean(*args, **kwargs)
@@ -59,7 +50,6 @@ class wickselled_trans(stats.rv_continuous):
             return 0.0
         
     def _pdf(self, x, *args):
-        print(args)
         *args, baseloc, basescale = args
         if isinstance(x, num) or x.size == 1:
             return self._wicksellvec(x, *args, loc=baseloc, scale=basescale)
@@ -117,7 +107,7 @@ class wickselled_trans(stats.rv_continuous):
         isf_0 = self.basedist.isf(p, *args, loc=baseloc, scale=basescale, **kwargs)
         return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs)+p-1, isf_0)
     
-    def rvs(self, *args, baseloc=0.0, basescale=1.0, size=None, **kwargs):
+    def rvs(self, *args, size=None, **kwargs):
         if size is None:
             n_req = 1
             init_size = 1000
@@ -127,7 +117,7 @@ class wickselled_trans(stats.rv_continuous):
                 init_size = 1000
             else:
                 init_size = n_req
-        r = self.basedist.rvs(*args, size=init_size, loc=baseloc, scale=basescale, **kwargs)
+        r = self.basedist.rvs(*args, size=init_size, **kwargs)
         x_ref = np.cumsum(2*r) - r
         x_pick = np.random.rand(init_size) * np.sum(2*r)
         i = [np.argmin((x_pick_i-x_ref)**2 - r**2) for x_pick_i in x_pick]
@@ -138,7 +128,15 @@ class wickselled_trans(stats.rv_continuous):
             return np.sqrt(r2[:n_req]).reshape(size)
         else:
             return np.sqrt(r2).reshape(size)
-    
+
+    def _moment_distance(self, moments, *args):
+        statistics = self.stats(*args, moments='mvsk')
+        d = 0.0
+        for i, moment in enumerate(moments):
+            di = (statistics[i] - moments[i])**2
+            d += 1.0/(1.0 + i) * di
+        return d
+
     def _fitstart(self, data, args=None):
         """
         Here, we use the _fitstats method from the base distribution. Note that using this as an initial guess is a very
@@ -150,3 +148,10 @@ class wickselled_trans(stats.rv_continuous):
 
     def fit(self, data, *args, floc=0.0, fscale=1.0, **kwds):
         return super().fit(data, *args, floc=floc, fscale=fscale, **kwds)
+
+    def fit_moments(self, data, *args):
+        moments = (np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data))
+
+        def func(theta):
+            return self._moment_distance(moments, *theta)
+        return opti.fmin(func, self._fitstart(data, args=args), args=(np.ravel(data),), disp=False)
