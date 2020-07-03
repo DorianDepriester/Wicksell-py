@@ -33,16 +33,16 @@ def cdf_uni(x, rmin, rmax):
                          lambda r: 1 - (gamma(r) + r ** 2 * log(r)) / (rmax ** 2 - rmin ** 2),
                          1.0])
 
-def rv_cont2hist(frozen_dist, eps=1e-3, nbins=1000):
-    q = np.linspace(eps, 1-eps, nbins)
-    mid_points = frozen_dist.ppf(q)
-    bounds = (mid_points[:-1] + mid_points[1:])/2
-    lb = np.insert(bounds, 0, 0.0)
-    uub = 2 * mid_points[-1] - bounds[-1]
-    ub = np.append(bounds, uub)
+def rv_cont2hist(frozen_dist, nbins):
+    eps = 1 / (1000*nbins)
+    q = np.linspace(eps, 1-eps, nbins+1)
+    lb = frozen_dist.ppf(q)
+    ub = lb[1:]
+    lb = lb[:-1]
+    mid_points = (lb + ub) / 2
     freq = frozen_dist.cdf(ub) - frozen_dist.cdf(lb)
-    freq = freq/np.sum(freq)
-    return lb, ub, freq
+    freq = freq / np.sum(freq)
+    return lb, mid_points, ub, freq
 
 
 class wickselled_trans(stats.rv_continuous):
@@ -65,6 +65,9 @@ class wickselled_trans(stats.rv_continuous):
             shapes = basedist.shapes + ', baseloc, basescale'
         super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=basedist.b, name=new_name, **kwargs)
         self._wicksellvec = np.vectorize(self._wicksell_single, otypes='d')
+        self._pdf_vec = np.vectorize(self._pdf_single, otypes='d')
+        self._cdf_vec = np.vectorize(self._cdf_single, otypes='d')
+
 
     def _argcheck(self, *args):
         """
@@ -83,47 +86,29 @@ class wickselled_trans(stats.rv_continuous):
         else:
             return 0.0
 
-    def _pdf(self, x, *args):
+    def _pdf_single(self, x, *args):
         *args, baseloc, basescale = args
-        if isinstance(x, num) or x.size == 1:
-            return self._wicksellvec(x, *args, loc=baseloc, scale=basescale)
-        else:
-            if x.size < self.nint:
-                return [self._wicksellvec(xi, *args, loc=baseloc, scale=basescale) for xi in x]
-            else:
-                if not isinstance(baseloc, num):
-                    baseloc = baseloc[0]
-                    basescale = basescale[0]
-                    args = [args_i[0] for args_i in args]
-                x1 = self.basedist.isf(self.eps, *args, loc=baseloc, scale=basescale)
-                x0 = 0.999 * x1
-                y0 = self._wicksellvec(x0, *args, loc=baseloc, scale=basescale)
-                y1 = self._wicksellvec(x1, *args, loc=baseloc, scale=basescale)
-                fp = (y1 - y0) / (x1 - x0)
-                a = fp / y1
-                xp = np.linspace(np.min(x), np.max(x), self.nint)
-                yp = [self._wicksellvec(xi, *args, loc=baseloc, scale=basescale) for xi in xp]
-                y = np.zeros(x.shape)
-                y[x <= x1] = np.interp(x[x <= x1], xp, yp)
-                y[x > x1] = y1 * np.exp(a * (x[x > x1] - x1))
-                return y
+        frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
+        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, nbins=1000)
+        ft = 0.0
+        for i in range(0, len(freq)):
+            ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
+        return 1 / frozen_dist.mean() * ft
+
+    def _cdf_single(self, x, *args):
+        *args, baseloc, basescale = args
+        frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
+        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, nbins=1000)
+        Ft = 0.0
+        for i in range(0, len(freq)):
+            Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
+        return 1 / frozen_dist.mean() * Ft
+
+    def _pdf(self, x, *args):
+        return self._pdf_vec(x, *args)
 
     def _cdf(self, x, *args):
-        *args, baseloc, basescale = args
-        integrand = lambda r: self._wicksellvec(r, *args, loc=baseloc, scale=basescale)
-        if isinstance(x, num) or x.size == 1:
-            return integrate.quad(integrand, 0, x)[0]
-        else:
-            if x.size < 0.0:
-                return [integrate.quad(integrand, 0, xi)[0] for xi in x]
-            else:
-                loc0 = baseloc[0]
-                scale0 = basescale[0]
-                args = [args_i[0] for args_i in args]
-                xint = np.linspace(0, np.max(x), self.nint)
-                pdfi = [self._wicksellvec(xi, *args, loc=loc0, scale=scale0) for xi in xint]
-                yint = integrate.cumtrapz(pdfi, x=xint, initial=0.0)
-                return np.interp(x, xint, yint, left=0.0, right=1.0)
+        return self._cdf_vec(x, *args)
 
     def _stats(self, *args):
         data = self.rvs(*args[:-2], baseloc=args[-2], basescale=args[-1], size=10000)
