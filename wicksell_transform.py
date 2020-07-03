@@ -36,7 +36,7 @@ class wickselled_trans(stats.rv_continuous):
         """
         Check that the argument passed to the base distribution are correct and that basescale
         """
-        return self.basedist._argcheck(*args[:-2]) and (args[-1] > 0.0)
+        return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args[:-2])[0] >= 0.0) and (args[-1] > 0.0)
 
     def _parse_args(self, * args, **kwargs):
         return self.basedist._parse_args(*args)
