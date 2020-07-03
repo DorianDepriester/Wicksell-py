@@ -33,6 +33,17 @@ def cdf_uni(x, rmin, rmax):
                          lambda r: 1 - (gamma(r) + r ** 2 * log(r)) / (rmax ** 2 - rmin ** 2),
                          1.0])
 
+def rv_cont2hist(frozen_dist, eps=1e-3, nbins=1000):
+    q = np.linspace(eps, 1-eps, nbins)
+    mid_points = frozen_dist.ppf(q)
+    bounds = (mid_points[:-1] + mid_points[1:])/2
+    lb = np.insert(bounds, 0, 0.0)
+    uub = 2 * mid_points[-1] - bounds[-1]
+    ub = np.append(bounds, uub)
+    freq = frozen_dist.cdf(ub) - frozen_dist.cdf(lb)
+    freq = freq/np.sum(freq)
+    return lb, ub, freq
+
 
 class wickselled_trans(stats.rv_continuous):
     """
