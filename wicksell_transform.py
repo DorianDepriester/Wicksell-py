@@ -36,10 +36,13 @@ class wickselled_trans(stats.rv_continuous):
         """
         Check that the argument passed to the base distribution are correct and that basescale
         """
-        return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args[:-2])[0] >= 0.0) and (args[-1] > 0.0)
+        return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args)[0] >= 0.0) and (args[-1] > 0.0)
 
     def _parse_args(self, * args, **kwargs):
         return self.basedist._parse_args(*args)
+
+    def _parse_args_stats(self, * args, **kwargs):
+        return self.basedist._parse_args_stats(*args)
 
     def _parse_args_rvs(self, * args, **kwargs):
         return self.basedist._parse_args_rvs(*args)
@@ -94,14 +97,14 @@ class wickselled_trans(stats.rv_continuous):
                 pdfi = [self._wicksellvec(xi, *args, loc=loc0, scale=scale0) for xi in xint]
                 yint = integrate.cumtrapz(pdfi, x=xint, initial=0.0)
                 return np.interp(x, xint, yint, left=0.0, right=1.0)
+
+    def _stats(self, *args):
+        data = self.rvs(*args[:-2], baseloc=args[-2], basescale=args[-1], size=10000)
+        return np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data)
     
     def expect(self, *args, baseloc=0.0, basescale=1.0, **kwargs):
         integrand = lambda x: self._wicksellvec(x, *args, loc=baseloc, scale=basescale, **kwargs) * x
         return integrate.quad(integrand, 0, np.inf)[0]
-    
-    def mean(self, *args, baseloc=0.0, basescale=1.0, size=10000, **kwargs):
-        data = self.rvs(size=size, *args, **kwargs)
-        return np.mean(data)
         
     def _ppf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
         ppf_0 = self.basedist.ppf(p, *args, loc=baseloc, scale=basescale, **kwargs)
