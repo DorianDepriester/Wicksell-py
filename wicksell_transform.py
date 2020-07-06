@@ -33,6 +33,7 @@ def cdf_uni(x, rmin, rmax):
                          lambda r: 1 - (gamma(r) + r ** 2 * log(r)) / (rmax ** 2 - rmin ** 2),
                          1.0])
 
+
 def rv_cont2hist(frozen_dist, nbins):
     eps = 1 / (1000*nbins)
     q = np.linspace(eps, 1-eps, nbins+1)
@@ -54,17 +55,15 @@ class wickselled_trans(stats.rv_continuous):
      - Depriester D and Kubler R (2019), doi:10.5566/ias.2133
     """
 
-    def __init__(self, basedist, nint=500, eps=1e-3, **kwargs):
+    def __init__(self, basedist, nbins=1000, eps=1e-3, **kwargs):
         self.basedist = basedist
-        self.nint = nint
-        self.eps = eps
+        self.nbins = nbins
         new_name = 'Wicksell''s transform of {}'.format(basedist.name)
         if basedist.shapes is None:
             shapes = 'baseloc, basescale'
         else:
             shapes = basedist.shapes + ', baseloc, basescale'
         super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=basedist.b, name=new_name, **kwargs)
-        self._wicksellvec = np.vectorize(self._wicksell_single, otypes='d')
         self._pdf_vec = np.vectorize(self._pdf_single, otypes='d')
         self._cdf_vec = np.vectorize(self._cdf_single, otypes='d')
 
@@ -74,14 +73,16 @@ class wickselled_trans(stats.rv_continuous):
         Check that all the following conditions are valid:
         - the argument passed to the base distribution are correct
         - basescale is positive
-        - the support of base distribution is a subset of [0, +inf]
+        - the support of base distribution is a subset of [0, +inf)
         """
         return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args)[0] >= 0.0) and (args[-1] > 0.0)
 
-    def _wicksell_single(self, x, *args, **kwargs):
-        E = self.basedist.mean(*args, **kwargs)
+    def wicksell(self, x, *args, **kwargs):
+        *args, baseloc, basescale = args
+        frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
+        E = frozen_dist.mean()
         if 0.0 < x:
-            integrand = lambda R: self.basedist.pdf(R, *args, **kwargs) * (R ** 2 - x ** 2) ** (-0.5)
+            integrand = lambda R: frozen_dist.pdf(R) * (R ** 2 - x ** 2) ** (-0.5)
             return integrate.quad(integrand, x, np.inf)[0] * x / E
         else:
             return 0.0
@@ -89,7 +90,7 @@ class wickselled_trans(stats.rv_continuous):
     def _pdf_single(self, x, *args):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
-        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, nbins=1000)
+        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, self.nbins)
         ft = 0.0
         for i in range(0, len(freq)):
             ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
@@ -98,7 +99,7 @@ class wickselled_trans(stats.rv_continuous):
     def _cdf_single(self, x, *args):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
-        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, nbins=1000)
+        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, self.nbins)
         Ft = 0.0
         for i in range(0, len(freq)):
             Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
