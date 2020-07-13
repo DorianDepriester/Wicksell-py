@@ -5,12 +5,10 @@ Created on Tue Jun 23 16:42:21 2020
 @author: Dorian
 """
 import scipy.stats as stats
-from scipy.stats._distn_infrastructure import rv_frozen
 import scipy.optimize as opti
 import numpy as np
 from numpy import sqrt, log
 import scipy.integrate as integrate
-from numbers import Number as num
 
 
 def pdf_uni(x, rmin, rmax):
