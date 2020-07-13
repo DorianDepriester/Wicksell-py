@@ -26,14 +26,16 @@ def pdf_uni(x, rmin, rmax):
 
 
 def cdf_uni(x, rmin, rmax):
-    cond = [x <= 0.0, x <= rmin, (rmin < x) & (x <= rmax), rmax < x]
     gamma = lambda r: rmax * sqrt(rmax ** 2 - r ** 2) - r ** 2 * log(rmax + sqrt(rmax ** 2 - r ** 2))
-    return np.piecewise(x, cond,
-                        [0.0,
-                         lambda r: 1 - (gamma(r) + r ** 2 * log(rmin + sqrt(rmin ** 2 - r ** 2))
-                                        - rmin * sqrt(rmin ** 2 - r ** 2)) / (rmax ** 2 - rmin ** 2),
-                         lambda r: 1 - (gamma(r) + r ** 2 * log(r)) / (rmax ** 2 - rmin ** 2),
-                         1.0])
+    if x <= 0.0:
+        return 0.0
+    elif x <= rmin:
+        return 1 - (gamma(x) + x ** 2 * log(rmin + sqrt(rmin ** 2 - x ** 2)) - rmin * sqrt(rmin ** 2 - x ** 2))\
+               / (rmax ** 2 - rmin ** 2)
+    elif (rmin < x) & (x <= rmax):
+        return 1 - (gamma(x) + x ** 2 * log(x)) / (rmax ** 2 - rmin ** 2)
+    else:
+        return 1.0
 
 
 def rv_cont2hist(frozen_dist, nbins):
