@@ -14,13 +14,15 @@ from numbers import Number as num
 
 
 def pdf_uni(x, rmin, rmax):
-    return np.piecewise(x,
-                        [x <= 0.0, x <= rmin, (rmin < x) & (x <= rmax), rmax < x],
-                        [0.0,
-                         lambda r: 2 * r / (rmax ** 2 - rmin ** 2) * log(
-                             (rmax + sqrt(rmax ** 2 - r ** 2)) / (rmin + sqrt(rmin ** 2 - r ** 2))),
-                         lambda r: 2 * r / (rmax ** 2 - rmin ** 2) * log((rmax + sqrt(rmax ** 2 - r ** 2)) / r),
-                         0.0])
+    if x <= 0.0:
+        return 0.0
+    elif x <= rmin:
+        return 2 * x / (rmax ** 2 - rmin ** 2) * log(
+                             (rmax + sqrt(rmax ** 2 - x ** 2)) / (rmin + sqrt(rmin ** 2 - x ** 2)))
+    elif (rmin < x) & (x <= rmax):
+        return 2 * x / (rmax ** 2 - rmin ** 2) * log((rmax + sqrt(rmax ** 2 - x ** 2)) / x)
+    else:
+        return 0.0
 
 
 def cdf_uni(x, rmin, rmax):
@@ -36,7 +38,7 @@ def cdf_uni(x, rmin, rmax):
 
 def rv_cont2hist(frozen_dist, nbins):
     eps = 1 / (1000*nbins)
-    q = np.linspace(eps, 1-eps, nbins+1)
+    q = np.linspace(0, 1-eps, nbins+1)
     lb = frozen_dist.ppf(q)
     ub = lb[1:]
     lb = lb[:-1]
