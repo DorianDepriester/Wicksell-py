@@ -5,6 +5,7 @@ Created on Tue Jun 23 16:42:21 2020
 @author: Dorian
 """
 import scipy.stats as stats
+import scipy.special as spec
 import scipy.optimize as opti
 import numpy as np
 from numpy import sqrt, log
@@ -37,7 +38,7 @@ def cdf_uni(x, rmin, rmax):
 
 
 def rv_cont2hist(frozen_dist, nbins):
-    eps = 1 / (1000*nbins)
+    eps = 1 / (1000 * nbins)
     q = np.linspace(0, 1-eps, nbins+1)
     lb = frozen_dist.ppf(q)
     ub = lb[1:]
@@ -93,10 +94,16 @@ class wickselled_trans(stats.rv_continuous):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
         lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, self.nbins)
-        ft = 0.0
-        for i in range(0, len(freq)):
-            ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
-        return 1 / frozen_dist.mean() * ft
+        R_eps = ub[-1]
+        sigma = np.real(R_eps / np.sqrt(-spec.lambertw(-R_eps*frozen_dist.pdf(R_eps)/2, k=-1)))
+        if x <= R_eps:
+            ft = np.sqrt(np.pi/2) * (1 - spec.erf(np.sqrt(R_eps**2-x**2)/(np.sqrt(2)*sigma))) / sigma *\
+                 x * np.exp(-x**2/(2*sigma**2))
+            for i in range(0, len(freq)):
+                ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
+            return 1 / frozen_dist.mean() * ft
+        else:
+            return stats.rayleigh.pdf(x, scale=sigma)
 
     def _cdf_single(self, x, *args):
         *args, baseloc, basescale = args
