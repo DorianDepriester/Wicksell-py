@@ -37,18 +37,6 @@ def cdf_uni(x, rmin, rmax):
         return 1.0
 
 
-def rv_cont2hist(frozen_dist, nbins):
-    eps = 1 / (1000 * nbins)
-    q = np.linspace(0, 1-eps, nbins+1)
-    lb = frozen_dist.ppf(q)
-    ub = lb[1:]
-    lb = lb[:-1]
-    mid_points = (lb + ub) / 2
-    freq = frozen_dist.cdf(ub) - frozen_dist.cdf(lb)
-    freq = freq / np.sum(freq)
-    return lb, mid_points, ub, freq
-
-
 class wickselled_trans(stats.rv_continuous):
     """
     Wicksell's transform of a given distribution.
@@ -90,10 +78,22 @@ class wickselled_trans(stats.rv_continuous):
         else:
             return 0.0
 
+    def _rv_cont2hist(self, nbins, *args, **kwargs):
+        frozen_dist = self.basedist(args, **kwargs)
+        eps = 1 / (1000 * nbins)
+        q = np.linspace(0, 1 - eps, nbins + 1)
+        lb = frozen_dist.ppf(q)
+        ub = lb[1:]
+        lb = lb[:-1]
+        mid_points = (lb + ub) / 2
+        freq = frozen_dist.cdf(ub) - frozen_dist.cdf(lb)
+        freq = freq / np.sum(freq)
+        return lb, mid_points, ub, freq
+
     def _pdf_single(self, x, *args):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
-        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, self.nbins)
+        lb, mid_points, ub, freq = self._rv_cont2hist(1000, *args, loc=baseloc, scale=basescale)
         R_eps = ub[-1]
         sigma = np.real(R_eps / np.sqrt(-spec.lambertw(-R_eps*frozen_dist.pdf(R_eps)/2, k=-1)))
         if x <= R_eps:
@@ -108,7 +108,7 @@ class wickselled_trans(stats.rv_continuous):
     def _cdf_single(self, x, *args):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
-        lb, mid_points, ub, freq = rv_cont2hist(frozen_dist, self.nbins)
+        lb, mid_points, ub, freq = self._rv_cont2hist(1000, *args, loc=baseloc, scale=basescale)
         Ft = 0.0
         for i in range(0, len(freq)):
             Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
