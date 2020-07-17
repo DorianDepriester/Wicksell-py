@@ -57,6 +57,7 @@ class wickselled_trans(stats.rv_continuous):
         super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=basedist.b, name=new_name, **kwargs)
         self._pdf_vec = np.vectorize(self._pdf_single, otypes='d')
         self._cdf_vec = np.vectorize(self._cdf_single, otypes='d')
+        self.Rmax = -1.0
 
 
     def _argcheck(self, *args):
@@ -83,6 +84,8 @@ class wickselled_trans(stats.rv_continuous):
         eps = 1 / (1000 * nbins)
         q = np.linspace(0, 1 - eps, nbins + 1)
         lb = frozen_dist.ppf(q)
+        if self.Rmax > lb[-1]:
+            lb = np.append(lb, self.Rmax)
         ub = lb[1:]
         lb = lb[:-1]
         mid_points = (lb + ub) / 2
@@ -94,16 +97,10 @@ class wickselled_trans(stats.rv_continuous):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
         lb, mid_points, ub, freq = self._rv_cont2hist(1000, *args, loc=baseloc, scale=basescale)
-        R_eps = ub[-1]
-        sigma = np.real(R_eps / np.sqrt(-spec.lambertw(-R_eps*frozen_dist.pdf(R_eps)/2, k=-1)))
-        if x <= R_eps:
-            ft = np.sqrt(np.pi/2) * (1 - spec.erf(np.sqrt(R_eps**2-x**2)/(np.sqrt(2)*sigma))) / sigma *\
-                 x * np.exp(-x**2/(2*sigma**2))
-            for i in range(0, len(freq)):
-                ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
-            return 1 / frozen_dist.mean() * ft
-        else:
-            return stats.rayleigh.pdf(x, scale=sigma)
+        ft = 0.0
+        for i in range(0, len(freq)):
+            ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
+        return 1 / frozen_dist.mean() * ft
 
     def _cdf_single(self, x, *args):
         *args, baseloc, basescale = args
@@ -116,6 +113,10 @@ class wickselled_trans(stats.rv_continuous):
 
     def _pdf(self, x, *args):
         return self._pdf_vec(x, *args)
+
+    def pdf(self, x, *args, **kwds):
+        self.Rmax = max(x)
+        return super().pdf(x, *args, **kwds)
 
     def _cdf(self, x, *args):
         return self._cdf_vec(x, *args)
