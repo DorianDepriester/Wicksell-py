@@ -79,10 +79,14 @@ class wickselled_trans(stats.rv_continuous):
         else:
             return 0.0
 
-    def _rv_cont2hist(self, nbins, *args, **kwargs):
-        frozen_dist = self.basedist(args, **kwargs)
-        eps = 1 / (1000 * nbins)
-        q = np.linspace(0, 1 - eps, nbins + 1)
+    def _rv_cont2hist(self, *args, **kwargs):
+        frozen_dist = self.basedist(*args, **kwargs)
+        if frozen_dist.support()[1] == np.inf:
+            eps = 1 / (1000 * self.nbins)
+            q_max = 1.0 - eps
+        else:
+            q_max = 1.0
+        q = np.linspace(0, q_max, self.nbins + 1)
         lb = frozen_dist.ppf(q)
         if self.Rmax > lb[-1]:
             lb = np.append(lb, self.Rmax)
@@ -96,7 +100,7 @@ class wickselled_trans(stats.rv_continuous):
     def _pdf_single(self, x, *args):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
-        lb, mid_points, ub, freq = self._rv_cont2hist(1000, *args, loc=baseloc, scale=basescale)
+        lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         ft = 0.0
         for i in range(0, len(freq)):
             ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
@@ -105,7 +109,7 @@ class wickselled_trans(stats.rv_continuous):
     def _cdf_single(self, x, *args):
         *args, baseloc, basescale = args
         frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
-        lb, mid_points, ub, freq = self._rv_cont2hist(1000, *args, loc=baseloc, scale=basescale)
+        lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         Ft = 0.0
         for i in range(0, len(freq)):
             Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
