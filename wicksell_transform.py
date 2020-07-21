@@ -45,7 +45,7 @@ class wickselled_trans(stats.rv_continuous):
      - Depriester D and Kubler R (2019), doi:10.5566/ias.2133
     """
 
-    def __init__(self, basedist, nbins=1000, eps=1e-3, **kwargs):
+    def __init__(self, basedist, nbins=1000, **kwargs):
         self.basedist = basedist
         self.nbins = nbins
         new_name = 'Wicksell''s transform of {}'.format(basedist.name)
