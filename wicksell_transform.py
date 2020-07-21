@@ -5,7 +5,6 @@ Created on Tue Jun 23 16:42:21 2020
 @author: Dorian
 """
 import scipy.stats as stats
-import scipy.special as spec
 import scipy.optimize as opti
 import numpy as np
 from numpy import sqrt, log
@@ -88,7 +87,7 @@ class wickselled_trans(stats.rv_continuous):
             q_max = 1.0
         q = np.linspace(0, q_max, self.nbins + 1)
         lb = frozen_dist.ppf(q)
-        if self.Rmax > lb[-1]:
+        if self.Rmax > lb[-1] and q_max != 1.0:
             lb = np.append(lb, self.Rmax)
         ub = lb[1:]
         lb = lb[:-1]
@@ -99,21 +98,21 @@ class wickselled_trans(stats.rv_continuous):
 
     def _pdf_single(self, x, *args):
         *args, baseloc, basescale = args
-        frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         ft = 0.0
         for i in range(0, len(freq)):
             ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
-        return 1 / frozen_dist.mean() * ft
+        E = np.sum(freq * mid_points)
+        return ft / E
 
     def _cdf_single(self, x, *args):
         *args, baseloc, basescale = args
-        frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         Ft = 0.0
         for i in range(0, len(freq)):
             Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
-        return 1 / frozen_dist.mean() * Ft
+        E = np.sum(freq * mid_points)
+        return Ft / E
 
     def _pdf(self, x, *args):
         return self._pdf_vec(x, *args)
@@ -130,7 +129,7 @@ class wickselled_trans(stats.rv_continuous):
         return np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data)
 
     def expect(self, *args, baseloc=0.0, basescale=1.0, **kwargs):
-        integrand = lambda x: self._wicksellvec(x, *args, loc=baseloc, scale=basescale, **kwargs) * x
+        integrand = lambda x: self.wicksell(x, *args, loc=baseloc, scale=basescale, **kwargs) * x
         return integrate.quad(integrand, 0, np.inf)[0]
 
     def _ppf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
