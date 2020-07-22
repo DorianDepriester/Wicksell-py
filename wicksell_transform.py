@@ -70,7 +70,7 @@ class wickselled_trans(stats.rv_continuous):
 
     def wicksell(self, x, *args, **kwargs):
         *args, baseloc, basescale = args
-        frozen_dist=self.basedist(*args, loc=baseloc, scale=basescale)
+        frozen_dist = self.basedist(*args, loc=baseloc, scale=basescale)
         E = frozen_dist.mean()
         if 0.0 < x:
             integrand = lambda R: frozen_dist.pdf(R) * (R ** 2 - x ** 2) ** (-0.5)
