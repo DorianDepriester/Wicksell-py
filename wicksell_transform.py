@@ -81,8 +81,7 @@ class wickselled_trans(stats.rv_continuous):
     def _rv_cont2hist(self, *args, **kwargs):
         frozen_dist = self.basedist(*args, **kwargs)
         if frozen_dist.support()[1] == np.inf:
-            eps = 1 / (1000 * self.nbins)
-            q_max = 1.0 - eps
+            q_max = self.nbins / (self.nbins + 1)
         else:
             q_max = 1.0
         q = np.linspace(0, q_max, self.nbins + 1)
@@ -118,49 +117,63 @@ class wickselled_trans(stats.rv_continuous):
         return self._pdf_vec(x, *args)
 
     def pdf(self, x, *args, **kwds):
-        self.Rmax = max(x)
+        if isinstance(x, int):
+            self.Rmax = float(x)
+        elif isinstance(x, float):
+            self.Rmax = x
+        else:
+            self.Rmax = max(x)
         return super().pdf(x, *args, **kwds)
 
     def _cdf(self, x, *args):
         return self._cdf_vec(x, *args)
 
+    def cdf(self, x, *args, **kwds):
+        if isinstance(x, int):
+            self.Rmax = float(x)
+        elif isinstance(x, float):
+            self.Rmax = x
+        else:
+            self.Rmax = max(x)
+        return super().cdf(x, *args, **kwds)
+
     def _stats(self, *args):
-        data = self.rvs(*args[:-2], baseloc=args[-2], basescale=args[-1], size=10000)
+        data = self.rvs(*args, size=10000)
         return np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data)
 
     def expect(self, *args, baseloc=0.0, basescale=1.0, **kwargs):
         integrand = lambda x: self.wicksell(x, *args, loc=baseloc, scale=basescale, **kwargs) * x
         return integrate.quad(integrand, 0, np.inf)[0]
 
-    def _ppf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
-        ppf_0 = self.basedist.ppf(p, *args, loc=baseloc, scale=basescale, **kwargs)
-        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs) - p, ppf_0)
+    def _ppf(self, p, *args, **kwargs):
+        ppf_0 = self.basedist.ppf(p, *args, **kwargs)
+        return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) - p, ppf_0)
 
-    def isf(self, p, *args, baseloc=0.0, basescale=1.0, **kwargs):
-        isf_0 = self.basedist.isf(p, *args, loc=baseloc, scale=basescale, **kwargs)
-        return opti.newton_krylov(lambda x: self.cdf(x, *args, loc=baseloc, scale=basescale, **kwargs) + p - 1, isf_0)
+    def _isf(self, p, *args, **kwargs):
+        isf_0 = self.basedist.isf(p, *args, **kwargs)
+        return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) + p - 1, isf_0)
 
-    def rvs(self, *args, size=None, **kwargs):
-        if size is None:
+    def _rvs(self, *args, **kwargs):
+        if self._size is None:
             n_req = 1
             init_size = 1000
         else:
-            n_req = np.prod(size)
+            n_req = np.prod(self._size)
             if n_req < 1000:
                 init_size = 1000
             else:
                 init_size = n_req
         r = self.basedist.rvs(*args, size=init_size, **kwargs)
-        x_ref = np.cumsum(2 * r) - r
+        x_ref = np.cumsum(2 * r) - r    # centers
         x_pick = np.random.rand(init_size) * np.sum(2 * r)
         i = [np.argmin((x_pick_i - x_ref) ** 2 - r ** 2) for x_pick_i in x_pick]
         r2 = r[i] ** 2 - (x_pick - x_ref[i]) ** 2
         if n_req == 1:
             return np.sqrt(r2[0])
         elif n_req < 1000:
-            return np.sqrt(r2[:n_req]).reshape(size)
+            return np.sqrt(r2[:n_req]).reshape(self._size)
         else:
-            return np.sqrt(r2).reshape(size)
+            return np.sqrt(r2).reshape(self._size)
 
     def _moment_distance(self, moments, *args):
         statistics = self.stats(*args, moments='mvsk')
