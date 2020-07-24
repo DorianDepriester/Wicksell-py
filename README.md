@@ -28,5 +28,5 @@ In the example above, ``distro`` must be continuous distribution, as defined in 
 - Wicksell, S. D. (1925). The corpuscle problem: A mathematical study of a biometric
 problem. *Biometrika*, 17(1/2):84–99, DOI: [10.2307/2332027](https://www.doi.org/10.2307/2332027)
 - Depriester, D. and Kubler, R. (2019). Resolution of the Wicksell's equation by minimum
-distance estimation. *Image Analysis & Stereology*, 38(3):213–226, DOI: [10.5566/ias.2133](https://www.doi.org/10.2307/2332027)
+distance estimation. *Image Analysis & Stereology*, 38(3):213–226, DOI: [10.5566/ias.2133](https://www.doi.org/10.5566/ias.2133)
 
