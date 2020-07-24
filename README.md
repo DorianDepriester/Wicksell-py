@@ -40,7 +40,7 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
 
     import numpy as np
     
-    x = np.linspace(0, 4, 1000)
+    x = np.linspace(0, 3, 1000)
     pdf = wlognorm.pdf(x, s, baseloc, basescale)
     cdf = wlognorm.cdf(x, s, baseloc, basescale)
 
@@ -62,6 +62,8 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
     ax1.set_xlabel('r')
     ax1.set_ylabel('Frequency')
     plt.show()
+    
+![Plot results](https://raw.githubusercontent.com/DorianDepriester/Wicksell-py/master/Wicksell_py.png)
     
 ### Fit the empirical data
 
