@@ -81,7 +81,7 @@ It appears that the first parameter is close to ``s`` (0.1) whereas the ``basesc
 
 ### Perform a goodness of fit test
 
-The transformed CDF can be used to perform the [Kolmogov-Smirnov test](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kstest.html). For instance, the parameters evaluated by fitting lead to:
+The transformed CDF can be used to perform the [Kolmogorov-Smirnov test](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kstest.html). For instance, the parameters evaluated by fitting lead to:
 
     stats.kstest(data, wlognorm.cdf, theta)
 
