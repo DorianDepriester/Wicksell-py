@@ -114,28 +114,22 @@ class wicksell_trans(stats.rv_continuous):
         return Ft / E
 
     def _pdf(self, x, *args):
+        if isinstance(x, int):
+            self.Rmax = float(x)
+        elif isinstance(x, float):
+            self.Rmax = x
+        else:
+            self.Rmax = max(x)
         return self._pdf_vec(x, *args)
 
-    def pdf(self, x, *args, **kwds):
-        if isinstance(x, int):
-            self.Rmax = float(x)
-        elif isinstance(x, float):
-            self.Rmax = x
-        else:
-            self.Rmax = max(x)
-        return super().pdf(x, *args, **kwds)
-
     def _cdf(self, x, *args):
-        return self._cdf_vec(x, *args)
-
-    def cdf(self, x, *args, **kwds):
         if isinstance(x, int):
             self.Rmax = float(x)
         elif isinstance(x, float):
             self.Rmax = x
         else:
             self.Rmax = max(x)
-        return super().cdf(x, *args, **kwds)
+        return self._cdf_vec(x, *args)
 
     def _stats(self, *args):
         data = self.rvs(*args, size=10000)
