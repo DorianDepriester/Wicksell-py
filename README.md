@@ -87,6 +87,9 @@ The transformed CDF can be used to perform the [Kolmogorov-Smirnov test](https:/
 
     KstestResult(statistic=0.013768823282845344, pvalue=0.9914096826147232)
     
+## :warning: Caveat :warning:
+Using the histogram decomposition instead of computing the improper integral considerably speeds up the computation of the PDF/CDF. Still, it can be time consuming. Thus the ``fit`` method can be slow. Indeed, the [example above](#fit-the-empirical-data) takes about 10 minutes on an Intel i9 @ 2.30 GHz.
+    
 
 ## References
 <a id="1">[1]</a>  Wicksell, S. D. (1925). The corpuscle problem: A mathematical study of a biometric
