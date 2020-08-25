@@ -11,16 +11,30 @@ from numpy import sqrt, log
 import scipy.integrate as integrate
 
 
+# def pdf_uni(x, rmin, rmax):
+#     if x <= 0.0:
+#         return 0.0
+#     elif x <= rmin:
+#         return 2 * x / (rmax ** 2 - rmin ** 2) * log(
+#                              (rmax + sqrt(rmax ** 2 - x ** 2)) / (rmin + sqrt(rmin ** 2 - x ** 2)))
+#     elif (rmin < x) & (x <= rmax):
+#         return 2 * x / (rmax ** 2 - rmin ** 2) * log((rmax + sqrt(rmax ** 2 - x ** 2)) / x)
+#     else:
+#         return 0.0
+
 def pdf_uni(x, rmin, rmax):
-    if x <= 0.0:
-        return 0.0
-    elif x <= rmin:
-        return 2 * x / (rmax ** 2 - rmin ** 2) * log(
-                             (rmax + sqrt(rmax ** 2 - x ** 2)) / (rmin + sqrt(rmin ** 2 - x ** 2)))
-    elif (rmin < x) & (x <= rmax):
-        return 2 * x / (rmax ** 2 - rmin ** 2) * log((rmax + sqrt(rmax ** 2 - x ** 2)) / x)
-    else:
-        return 0.0
+    xm, rming = np.meshgrid(x, rmin)
+    _ , rmaxg = np.meshgrid(x, rmax)
+    pdf = np.zeros(shape=xm.shape)
+    left = xm < rming
+    xg = xm[left]
+    pdf[left] = 2 * xg / (rmaxg[left] ** 2 - rming[left] ** 2) * log(
+                             (rmaxg[left] + sqrt(rmaxg[left] ** 2 - xg ** 2)) /
+                             (rming[left] + sqrt(rming[left] ** 2 - xg ** 2)))
+    center = (rming < xm) & (xm <= rmaxg)
+    xc = xm[center]
+    pdf[center] =2 * xc / (rmaxg[center] ** 2 - rming[center] ** 2) * log((rmaxg[center] + sqrt(rmaxg[center] ** 2 - xc ** 2)) / xc)
+    return pdf
 
 
 def cdf_uni(x, rmin, rmax):
