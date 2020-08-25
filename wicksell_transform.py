@@ -11,17 +11,6 @@ from numpy import sqrt, log
 import scipy.integrate as integrate
 
 
-# def pdf_uni(x, rmin, rmax):
-#     if x <= 0.0:
-#         return 0.0
-#     elif x <= rmin:
-#         return 2 * x / (rmax ** 2 - rmin ** 2) * log(
-#                              (rmax + sqrt(rmax ** 2 - x ** 2)) / (rmin + sqrt(rmin ** 2 - x ** 2)))
-#     elif (rmin < x) & (x <= rmax):
-#         return 2 * x / (rmax ** 2 - rmin ** 2) * log((rmax + sqrt(rmax ** 2 - x ** 2)) / x)
-#     else:
-#         return 0.0
-
 def pdf_uni(x, rmin, rmax):
     xm, rming = np.meshgrid(x, rmin)
     _ , rmaxg = np.meshgrid(x, rmax)
@@ -35,19 +24,6 @@ def pdf_uni(x, rmin, rmax):
     xc = xm[center]
     pdf[center] =2 * xc / (rmaxg[center] ** 2 - rming[center] ** 2) * log((rmaxg[center] + sqrt(rmaxg[center] ** 2 - xc ** 2)) / xc)
     return pdf
-
-
-# def cdf_uni(x, rmin, rmax):
-#     gamma = lambda r: rmax * sqrt(rmax ** 2 - r ** 2) - r ** 2 * log(rmax + sqrt(rmax ** 2 - r ** 2))
-#     if x <= 0.0:
-#         return 0.0
-#     elif x <= rmin:
-#         return 1 - (gamma(x) + x ** 2 * log(rmin + sqrt(rmin ** 2 - x ** 2)) - rmin * sqrt(rmin ** 2 - x ** 2))\
-#                / (rmax ** 2 - rmin ** 2)
-#     elif (rmin < x) & (x <= rmax):
-#         return 1 - (gamma(x) + x ** 2 * log(x)) / (rmax ** 2 - rmin ** 2)
-#     else:
-#         return 1.0
 
 def cdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
