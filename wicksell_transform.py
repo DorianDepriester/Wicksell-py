@@ -135,7 +135,10 @@ class wicksell_trans(stats.rv_continuous):
             MF = freq * mid_points
             P = pdf_uni(x, lb, ub)
             ft = np.dot(P.T, MF) / np.sum(MF)
-            return ft / (1 - self._cdf_untruncated(self.rmin, *args, baseloc, basescale))
+            if self.rmin <= 0.0:
+                return ft
+            else:
+                return ft / (1 - self._cdf_untruncated(self.rmin, *args, baseloc, basescale))
 
     def _cdf_untruncated(self, x, *args):
         *args, baseloc, basescale = args
@@ -148,7 +151,10 @@ class wicksell_trans(stats.rv_continuous):
         if x <= self.rmin:
             return 0.0
         else:
-            return (self._cdf_untruncated(x, *args) - self._cdf_untruncated(self.rmin, *args)) / \
+            if self.rmin <= 0.0:
+                return self._cdf_untruncated(x, *args)
+            else:
+                return (self._cdf_untruncated(x, *args) - self._cdf_untruncated(self.rmin, *args)) / \
                    (1 - self._cdf_untruncated(self.rmin, *args))
 
     def _pdf(self, x, *args):
