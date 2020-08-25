@@ -84,8 +84,8 @@ class wicksell_trans(stats.rv_continuous):
         else:
             shapes = basedist.shapes + ', baseloc, basescale'
         super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=basedist.b, name=new_name, **kwargs)
-        self._pdf_vec = np.vectorize(self._pdf_single, otypes='d')
-        self._cdf_vec = np.vectorize(self._cdf_single, otypes='d')
+        self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
+        self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
         self.Rmax = -1.0
         self.rmin = rmin
 
@@ -126,7 +126,7 @@ class wicksell_trans(stats.rv_continuous):
         freq = freq / np.sum(freq)
         return lb, mid_points, ub, freq
 
-    def _pdf_single(self, x, *args):
+    def _pdf_untruncated_single(self, x, *args):
         *args, baseloc, basescale = args
         if x <= self.rmin:
             return 0.0
@@ -134,28 +134,14 @@ class wicksell_trans(stats.rv_continuous):
             lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
             MF = freq * mid_points
             P = pdf_uni(x, lb, ub)
-            ft = np.dot(P.T, MF) / np.sum(MF)
-            if self.rmin <= 0.0:
-                return ft
-            else:
-                return ft / (1 - self._cdf_untruncated(self.rmin, *args, baseloc, basescale))
+            return np.dot(P.T, MF) / np.sum(MF)
 
-    def _cdf_untruncated(self, x, *args):
+    def _cdf_untruncated_single(self, x, *args):
         *args, baseloc, basescale = args
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         MF = freq * mid_points
         C = cdf_uni(x, lb, ub)
         return np.dot(C.T, MF) / np.sum(MF)
-
-    def _cdf_single(self, x, *args):
-        if x <= self.rmin:
-            return 0.0
-        else:
-            if self.rmin <= 0.0:
-                return self._cdf_untruncated(x, *args)
-            else:
-                return (self._cdf_untruncated(x, *args) - self._cdf_untruncated(self.rmin, *args)) / \
-                   (1 - self._cdf_untruncated(self.rmin, *args))
 
     def _pdf(self, x, *args):
         if isinstance(x, int):
@@ -164,7 +150,10 @@ class wicksell_trans(stats.rv_continuous):
             self.Rmax = x
         else:
             self.Rmax = max(x)
-        return self._pdf_vec(x, *args)
+        if self.rmin <= 0.0:
+            return self._pdf_untruncated_vec(x, *args)
+        else:
+            return self._pdf_untruncated_vec(x, *args) / (1 - self._cdf_untruncated_single(self.rmin, *args))
 
     def _cdf(self, x, *args):
         if isinstance(x, int):
@@ -173,7 +162,11 @@ class wicksell_trans(stats.rv_continuous):
             self.Rmax = x
         else:
             self.Rmax = max(x)
-        return self._cdf_vec(x, *args)
+        if self.rmin <= 0.0:
+            return self._cdf_untruncated_vec(x, *args)
+        else:
+            trunc = self._cdf_untruncated_single(self.rmin, *args)
+            return (self._pdf_untruncated_vec(x, *args) - trunc) / (1 - trunc)
 
     def _stats(self, *args):
         data = self.rvs(*args, size=10000)
