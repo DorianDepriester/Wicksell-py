@@ -28,6 +28,7 @@ In the example above, ``distro`` must be continuous distribution, as defined in 
 In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html) distribion is considered.
 
     import scipy.stats as stats
+    import numpy as np
     from wicksell_transform import wicksell_trans
     
     wlognorm = wicksell_trans(stats.lognorm)
