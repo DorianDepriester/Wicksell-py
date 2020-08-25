@@ -26,7 +26,7 @@ def pdf_uni(x, rmin, rmax):
     xm, rming = np.meshgrid(x, rmin)
     _ , rmaxg = np.meshgrid(x, rmax)
     pdf = np.zeros(shape=xm.shape)
-    left = xm < rming
+    left = xm <= rming
     xg = xm[left]
     pdf[left] = 2 * xg / (rmaxg[left] ** 2 - rming[left] ** 2) * log(
                              (rmaxg[left] + sqrt(rmaxg[left] ** 2 - xg ** 2)) /
@@ -37,17 +37,33 @@ def pdf_uni(x, rmin, rmax):
     return pdf
 
 
+# def cdf_uni(x, rmin, rmax):
+#     gamma = lambda r: rmax * sqrt(rmax ** 2 - r ** 2) - r ** 2 * log(rmax + sqrt(rmax ** 2 - r ** 2))
+#     if x <= 0.0:
+#         return 0.0
+#     elif x <= rmin:
+#         return 1 - (gamma(x) + x ** 2 * log(rmin + sqrt(rmin ** 2 - x ** 2)) - rmin * sqrt(rmin ** 2 - x ** 2))\
+#                / (rmax ** 2 - rmin ** 2)
+#     elif (rmin < x) & (x <= rmax):
+#         return 1 - (gamma(x) + x ** 2 * log(x)) / (rmax ** 2 - rmin ** 2)
+#     else:
+#         return 1.0
+
 def cdf_uni(x, rmin, rmax):
-    gamma = lambda r: rmax * sqrt(rmax ** 2 - r ** 2) - r ** 2 * log(rmax + sqrt(rmax ** 2 - r ** 2))
-    if x <= 0.0:
-        return 0.0
-    elif x <= rmin:
-        return 1 - (gamma(x) + x ** 2 * log(rmin + sqrt(rmin ** 2 - x ** 2)) - rmin * sqrt(rmin ** 2 - x ** 2))\
-               / (rmax ** 2 - rmin ** 2)
-    elif (rmin < x) & (x <= rmax):
-        return 1 - (gamma(x) + x ** 2 * log(x)) / (rmax ** 2 - rmin ** 2)
-    else:
-        return 1.0
+    x_m, rmin_m = np.meshgrid(x, rmin)
+    _ , rmax_m = np.meshgrid(x, rmax)
+    cdf = np.zeros(shape=x_m.shape)
+    left = x_m < rmin_m
+    xl = x_m[left]
+    gamma = rmax_m[left] * sqrt(rmax_m[left] ** 2 - xl ** 2) - xl ** 2 * log(rmax_m[left] + sqrt(rmax_m[left] ** 2 - xl ** 2))
+    cdf[left] = 1 - (gamma + xl ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - xl ** 2)) - rmin_m[left] * sqrt(rmin_m[left] ** 2 - xl ** 2))\
+               / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
+    center = (rmin_m < x_m) & (x_m <= rmax_m)
+    xc = x_m[center]
+    gamma = rmax_m[center] * sqrt(rmax_m[center] ** 2 - xc ** 2) - xc ** 2 * log(rmax_m[center] + sqrt(rmax_m[center] ** 2 - xc ** 2))
+    cdf[center] = 1 - (gamma + xc ** 2 * log(xc)) / (rmax_m[center] ** 2 - rmin_m[center] ** 2)
+    cdf[x_m > rmax_m] = 1.0
+    return cdf
 
 
 class wicksell_trans(stats.rv_continuous):
@@ -116,11 +132,9 @@ class wicksell_trans(stats.rv_continuous):
             return 0.0
         else:
             lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
-            ft = 0.0
-            for i in range(0, len(freq)):
-                ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
-            E = np.sum(freq * mid_points)
-            ft = ft / E
+            MF = freq * mid_points
+            P = pdf_uni(x, lb, ub)
+            ft = np.dot(P.T, MF) / np.sum(MF)
             return ft / (1 - self._cdf_untruncated(self.rmin, *args, baseloc, basescale))
 
     def _cdf_untruncated(self, x, *args):
