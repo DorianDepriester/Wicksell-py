@@ -140,11 +140,9 @@ class wicksell_trans(stats.rv_continuous):
     def _cdf_untruncated(self, x, *args):
         *args, baseloc, basescale = args
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
-        Ft = 0.0
-        for i in range(0, len(freq)):
-            Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
-        E = np.sum(freq * mid_points)
-        return Ft / E
+        MF = freq * mid_points
+        C = cdf_uni(x, lb, ub)
+        return np.dot(C.T, MF) / np.sum(MF)
 
     def _cdf_single(self, x, *args):
         if x <= self.rmin:
