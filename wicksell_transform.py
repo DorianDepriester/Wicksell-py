@@ -45,7 +45,7 @@ class wicksell_trans(stats.rv_continuous):
      - Depriester D and Kubler R (2019), doi:10.5566/ias.2133
     """
 
-    def __init__(self, basedist, nbins=1000, **kwargs):
+    def __init__(self, basedist, nbins=1000, rmin=0.0, **kwargs):
         self.basedist = basedist
         self.nbins = nbins
         new_name = 'Wicksell''s transform of {}'.format(basedist.name)
@@ -57,6 +57,7 @@ class wicksell_trans(stats.rv_continuous):
         self._pdf_vec = np.vectorize(self._pdf_single, otypes='d')
         self._cdf_vec = np.vectorize(self._cdf_single, otypes='d')
         self.Rmax = -1.0
+        self.rmin = rmin
 
 
     def _argcheck(self, *args):
@@ -97,14 +98,18 @@ class wicksell_trans(stats.rv_continuous):
 
     def _pdf_single(self, x, *args):
         *args, baseloc, basescale = args
-        lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
-        ft = 0.0
-        for i in range(0, len(freq)):
-            ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
-        E = np.sum(freq * mid_points)
-        return ft / E
+        if x <= self.rmin:
+            return 0.0
+        else:
+            lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
+            ft = 0.0
+            for i in range(0, len(freq)):
+                ft += freq[i] * mid_points[i] * pdf_uni(x, lb[i], ub[i])
+            E = np.sum(freq * mid_points)
+            ft = ft / E
+            return ft / (1 - self._cdf_untruncated(self.rmin, *args, baseloc, basescale))
 
-    def _cdf_single(self, x, *args):
+    def _cdf_untruncated(self, x, *args):
         *args, baseloc, basescale = args
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         Ft = 0.0
@@ -112,6 +117,13 @@ class wicksell_trans(stats.rv_continuous):
             Ft += freq[i] * mid_points[i] * cdf_uni(x, lb[i], ub[i])
         E = np.sum(freq * mid_points)
         return Ft / E
+
+    def _cdf_single(self, x, *args):
+        if x <= self.rmin:
+            return 0.0
+        else:
+            return (self._cdf_untruncated(x, *args) - self._cdf_untruncated(self.rmin, *args)) / \
+                   (1 - self._cdf_untruncated(self.rmin, *args))
 
     def _pdf(self, x, *args):
         if isinstance(x, int):
