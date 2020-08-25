@@ -39,8 +39,6 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
     
 ### Compute the transformed PDF/CDF
 
-    import numpy as np
-    
     x = np.linspace(0, 3, 1000)
     pdf = wlognorm.pdf(x, s, baseloc, basescale)
     cdf = wlognorm.cdf(x, s, baseloc, basescale)
