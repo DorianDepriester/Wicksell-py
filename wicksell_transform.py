@@ -129,7 +129,7 @@ class wicksell_trans(stats.rv_continuous):
         if self.rmin <= 0.0:
             return self._pdf_untruncated_vec(x, *args)
         else:
-            return self._pdf_untruncated_vec(x, *args) / (1 - self._cdf_untruncated_single(self.rmin, *args))
+            return self._pdf_untruncated_vec(x, *args) / (1 - self._cdf_untruncated_vec(self.rmin, *args))
 
     def _cdf(self, x, *args):
         if isinstance(x, int):
@@ -141,8 +141,8 @@ class wicksell_trans(stats.rv_continuous):
         if self.rmin <= 0.0:
             return self._cdf_untruncated_vec(x, *args)
         else:
-            trunc = self._cdf_untruncated_single(self.rmin, *args)
-            return (self._pdf_untruncated_vec(x, *args) - trunc) / (1 - trunc)
+            trunc = self._cdf_untruncated_vec(self.rmin, *args)
+            return (self._cdf_untruncated_vec(x, *args) - trunc) / (1 - trunc)
 
     def _stats(self, *args):
         data = self.rvs(*args, size=10000)
