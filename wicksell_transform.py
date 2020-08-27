@@ -12,27 +12,27 @@ import scipy.integrate as integrate
 
 
 def pdf_uni(x, rmin, rmax):
-    xm, rming = np.meshgrid(x, rmin)
-    _ , rmaxg = np.meshgrid(x, rmax)
-    pdf = np.zeros(shape=xm.shape)
-    left = xm <= rming
-    xg = xm[left]
-    pdf[left] = 2 * xg / (rmaxg[left] ** 2 - rming[left] ** 2) * log(
-                             (rmaxg[left] + sqrt(rmaxg[left] ** 2 - xg ** 2)) /
-                             (rming[left] + sqrt(rming[left] ** 2 - xg ** 2)))
-    center = (rming < xm) & (xm <= rmaxg)
-    xc = xm[center]
-    pdf[center] =2 * xc / (rmaxg[center] ** 2 - rming[center] ** 2) * log((rmaxg[center] + sqrt(rmaxg[center] ** 2 - xc ** 2)) / xc)
+    x_m, rmin_m = np.meshgrid(x, rmin)
+    _ , rmax_m = np.meshgrid(x, rmax)
+    pdf = np.zeros(shape=x_m.shape)
+    left = 0 < x_m <= rmin_m
+    x_l = x_m[left]
+    pdf[left] = 2 * x_l / (rmax_m[left] ** 2 - rmin_m[left] ** 2) * log(
+                             (rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2)) /
+                             (rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)))
+    center = (rmin_m < x_m) & (x_m <= rmax_m)
+    x_c = x_m[center]
+    pdf[center] = 2 * x_c / (rmax_m[center] ** 2 - rmin_m[center] ** 2) * log((rmax_m[center] + sqrt(rmax_m[center] ** 2 - x_c ** 2)) / x_c)
     return pdf
 
 def cdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
     _ , rmax_m = np.meshgrid(x, rmax)
     cdf = np.zeros(shape=x_m.shape)
-    left = x_m < rmin_m
-    xl = x_m[left]
-    gamma = rmax_m[left] * sqrt(rmax_m[left] ** 2 - xl ** 2) - xl ** 2 * log(rmax_m[left] + sqrt(rmax_m[left] ** 2 - xl ** 2))
-    cdf[left] = 1 - (gamma + xl ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - xl ** 2)) - rmin_m[left] * sqrt(rmin_m[left] ** 2 - xl ** 2))\
+    left = 0 < x_m <= rmin_m
+    x_l = x_m[left]
+    gamma = rmax_m[left] * sqrt(rmax_m[left] ** 2 - x_l ** 2) - x_l ** 2 * log(rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2))
+    cdf[left] = 1 - (gamma + x_l ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)) - rmin_m[left] * sqrt(rmin_m[left] ** 2 - x_l ** 2))\
                / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
     center = (rmin_m < x_m) & (x_m <= rmax_m)
     xc = x_m[center]
