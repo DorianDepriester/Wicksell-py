@@ -15,7 +15,7 @@ def pdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
     _ , rmax_m = np.meshgrid(x, rmax)
     pdf = np.zeros(shape=x_m.shape)
-    left = 0 < x_m <= rmin_m
+    left = (0 < x_m) and x_m <= rmin_m
     x_l = x_m[left]
     pdf[left] = 2 * x_l / (rmax_m[left] ** 2 - rmin_m[left] ** 2) * log(
                              (rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2)) /
@@ -29,7 +29,7 @@ def cdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
     _ , rmax_m = np.meshgrid(x, rmax)
     cdf = np.zeros(shape=x_m.shape)
-    left = 0 < x_m <= rmin_m
+    left = (0 < x_m) and x_m <= rmin_m
     x_l = x_m[left]
     gamma = rmax_m[left] * sqrt(rmax_m[left] ** 2 - x_l ** 2) - x_l ** 2 * log(rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2))
     cdf[left] = 1 - (gamma + x_l ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)) - rmin_m[left] * sqrt(rmin_m[left] ** 2 - x_l ** 2))\
