@@ -104,7 +104,7 @@ class wicksell_trans(stats.rv_continuous):
 
     def _pdf_untruncated_single(self, x, *args):
         *args, baseloc, basescale = args
-        if x <= self.rmin:
+        if x < self.rmin:
             return 0.0
         else:
             lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
