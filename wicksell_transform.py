@@ -94,7 +94,7 @@ class wicksell_trans(stats.rv_continuous):
         q = np.linspace(0, q_max, self.nbins + 1)
         lb = frozen_dist.ppf(q)
         if self.Rmax > lb[-1] and q_max != 1.0:
-            lb = np.append(lb, self.Rmax)
+            lb = np.append(lb, 1.01*self.Rmax)
         ub = lb[1:]
         lb = lb[:-1]
         mid_points = (lb + ub) / 2
