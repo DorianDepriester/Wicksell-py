@@ -163,11 +163,11 @@ class wicksell_trans(stats.rv_continuous):
     def _rvs(self, *args, **kwargs):
         if self._size is None:
             n_req = 1
-            init_size = 1000
+            init_size = 10000
         else:
             n_req = np.prod(self._size)
-            if n_req < 1000:
-                init_size = 1000
+            if n_req < 10000:
+                init_size = 10000
             else:
                 init_size = n_req
         r = self.basedist.rvs(*args, size=init_size, **kwargs)
@@ -177,7 +177,7 @@ class wicksell_trans(stats.rv_continuous):
         r2 = r[i] ** 2 - (x_pick - x_ref[i]) ** 2
         if n_req == 1:
             return np.sqrt(r2[0])
-        elif n_req < 1000:
+        elif n_req < 10000:
             return np.sqrt(r2[:n_req]).reshape(self._size)
         else:
             return np.sqrt(r2).reshape(self._size)
