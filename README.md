@@ -45,7 +45,9 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
 
 ### Generate random variables
 
-    data = wlognorm.rvs(s, baseloc, basescale, size=1000)
+    data = wlognorm.rvs(s, baseloc, basescale, size=1000, random_state=0)
+    
+The random state is fixed here for reproductibility.
     
 ### Plot results
 
@@ -74,9 +76,9 @@ Here, the fit is made assuming that the location parameter is 0 (as a reminder, 
 
 The example below roughly leads to:
 
-    (0.10673023837303208, 0.0, 1.6537426639526205, 0.0, 1.0)
+    (0.10258798884347263, 0.0, 1.649539304907202, 0.0, 1.0)
     
-It appears that the first parameter is close to ``s`` (0.1) whereas the ``basescale`` (3rd one) corresponds to µ=ln(1.654)=0.503 (instead of 0.5). Note that the 2 last arguments relate to the location and scale parameters of __the transformed__ distribution. Thus, they are not relevent at all.
+It appears that the first parameter is close to ``s`` (0.1) whereas the ``basescale`` (3rd one) corresponds to µ=ln(1.654)=0.5005 (instead of 0.5). Note that the 2 last arguments relate to the location and scale parameters of __the transformed__ distribution. Thus, they are not relevent at all.
 
 ### Perform a goodness of fit test
 
@@ -84,7 +86,7 @@ The transformed CDF can be used to perform the [Kolmogorov-Smirnov test](https:/
 
     stats.kstest(data, wlognorm.cdf, theta)
 
-    KstestResult(statistic=0.024368595486719324, pvalue=0.5926228928978994)
+    KstestResult(statistic=0.020989374537414673, pvalue=0.7704283648898784)
     
 ## :warning: Caveat :warning:
 Using the histogram decomposition instead of computing the improper integral considerably speeds up the computation of the PDF/CDF. Still, it can be time consuming. Thus the ``fit`` method can be slow. Indeed, the [example above](#fit-the-empirical-data) takes about 100 seconds to complete on an Intel i9 @ 2.30 GHz.
