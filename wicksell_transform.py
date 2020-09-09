@@ -196,7 +196,7 @@ class wicksell_trans(stats.rv_continuous):
         poor idea. Still, it ensures that each value in the initial guess are valid, i.e.:
             self._argcheck(theta_0)==True
         """
-        theta_0 = self.basedist._fitstart(data, args=args)
+        theta_0 = self.basedist._fitstart(data)
         return theta_0 + (0.0, 1.0)
 
     def fit(self, data, *args, floc=0.0, fscale=1.0, **kwds):
