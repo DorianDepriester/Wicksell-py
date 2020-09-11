@@ -162,7 +162,7 @@ class wicksell_trans(stats.rv_continuous):
 
     def _rvs(self, *args):
         if self._size == ():
-            n_req = int(1)
+            n_req = 1
         else:
             n_req = np.prod(self._size)
         init_size = max(10000, int(10*n_req))   # Number of spheres to choose
