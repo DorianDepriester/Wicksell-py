@@ -165,12 +165,12 @@ class wicksell_trans(stats.rv_continuous):
             n_req = 1
         else:
             n_req = np.prod(self._size)
-        init_size = max(10000, int(10*n_req))   # Number of spheres to choose
-        r = self.basedist.rvs(*args, size=init_size, random_state=self._random_state)
-        x_ref = np.cumsum(2 * r) - r    # centers
+        nbr_spheres = max(10000, int(10*n_req))   # Number of spheres to choose
+        r = self.basedist.rvs(*args, size=nbr_spheres, random_state=self._random_state)
+        centers = np.cumsum(2 * r) - r    # centers
         x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=self._random_state)
-        i = [np.argmin((x_pick_i - x_ref) ** 2 - r ** 2) for x_pick_i in x_pick]
-        r2 = r[i] ** 2 - (x_pick - x_ref[i]) ** 2
+        i = [np.argmin((x_pick_i - centers) ** 2 - r ** 2) for x_pick_i in x_pick]
+        r2 = r[i] ** 2 - (x_pick - centers[i]) ** 2
         if self._size == ():
             return np.sqrt(r2[0])
         else:
