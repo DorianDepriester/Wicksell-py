@@ -161,24 +161,18 @@ class wicksell_trans(stats.rv_continuous):
         return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) + p - 1, isf_0)
 
     def _rvs(self, *args):
-        if self._size is None:
-            n_req = 1
-            init_size = 10000
+        if self._size == ():
+            n_req = int(1)
         else:
             n_req = np.prod(self._size)
-            if n_req < 10000:
-                init_size = 10000
-            else:
-                init_size = n_req
+        init_size = int(10*n_req)
         r = self.basedist.rvs(*args, size=init_size, random_state=self._random_state)
         x_ref = np.cumsum(2 * r) - r    # centers
-        x_pick = stats.uniform.rvs(size=init_size, scale=np.sum(2 * r), random_state=self._random_state)
+        x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=self._random_state)
         i = [np.argmin((x_pick_i - x_ref) ** 2 - r ** 2) for x_pick_i in x_pick]
         r2 = r[i] ** 2 - (x_pick - x_ref[i]) ** 2
-        if n_req == 1:
+        if self._size == ():
             return np.sqrt(r2[0])
-        elif n_req < 10000:
-            return np.sqrt(r2[:n_req]).reshape(self._size)
         else:
             return np.sqrt(r2).reshape(self._size)
 
