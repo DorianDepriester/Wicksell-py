@@ -165,7 +165,7 @@ class wicksell_trans(stats.rv_continuous):
             n_req = int(1)
         else:
             n_req = np.prod(self._size)
-        init_size = int(10*n_req)
+        init_size = max(10000, int(10*n_req))   # Number of spheres to choose
         r = self.basedist.rvs(*args, size=init_size, random_state=self._random_state)
         x_ref = np.cumsum(2 * r) - r    # centers
         x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=self._random_state)
