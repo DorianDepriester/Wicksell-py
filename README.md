@@ -5,7 +5,7 @@ A Python class for computing Wicksell's transforms of continuous distributions.
 Consider a medium consisting in a large number of spheres whose radii follow a Probability Density Function (PDF) *f*. 
 If sections of the medium are made at random lattitudes, the radius apparents disks (denoted *r* below) would follow the PDF [[1]](#1):
 
-![a](https://latex.codecogs.com/gif.latex?\tilde{f}(r)=\frac{r}{E}\int_{r}^{\infty}\frac{f(R)}{\sqrt{R^2-r^2}}\mathrm{d}R)
+![a](https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\tilde{f}(r)=\frac{r}{E}\int_{r}^{\infty}\frac{f(R)}{\sqrt{R^2-r^2}}\mathrm{d}R)
 
 where *E* is the mean value of *f*. The previous formula is refered as the Wicksell's equation. 
 The histogram approximation is used to compute the Wicksell's equation of the continuous distribution *f*.
