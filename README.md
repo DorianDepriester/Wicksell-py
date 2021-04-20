@@ -78,7 +78,7 @@ The example below roughly leads to:
 
     (0.10258798884347263, 0.0, 1.649539304907202, 0.0, 1.0)
     
-It appears that the first parameter is close to ``s`` (0.1) whereas the ``basescale`` (3rd one) corresponds to µ=ln(1.654)=0.5005 (instead of 0.5). Note that the 2 last arguments relate to the location and scale parameters of __the transformed__ distribution. Thus, they are not relevent at all.
+It appears that the first parameter is close to ``s`` (0.1) whereas the ``basescale`` (3rd one) corresponds to µ=ln(1.654)=0.5005 (instead of 0.5). Note that the 2 last arguments relate to the location and scale parameters of __the transformed__ distribution. Thus, they are not relevant at all.
 
 ### Perform a goodness of fit test
 
