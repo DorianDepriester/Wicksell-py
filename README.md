@@ -96,6 +96,5 @@ Using the histogram decomposition instead of computing the improper integral con
 <a id="1">[1]</a>  Wicksell, S. D. (1925). The corpuscle problem: A mathematical study of a biometric
 problem. *Biometrika*, 17(1/2):84–99, DOI: [10.2307/2332027](https://www.doi.org/10.2307/2332027)
 
-<a id="2">[2]</a>  Depriester, D. and Kubler, R. (2019). Resolution of the Wicksell's equation by Minimum
-Distance Estimation. *Image Analysis & Stereology*, 38(3):213–226, DOI: [10.5566/ias.2133](https://www.doi.org/10.5566/ias.2133)
-
+<a id="2">[2]</a>  Depriester, D. and Kubler, R. (2021). 
+Grain size estimation in polycrystals: solving the corpuscle problem using Maximum Likelihood Estimation. *Journal of Structural Geology*, 104418, ISSN 0191-8141, DOI: [10.1016/j.jsg.2021.104418](https://doi.org/10.1016/j.jsg.2021.104418)
