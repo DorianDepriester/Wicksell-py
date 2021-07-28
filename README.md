@@ -90,6 +90,10 @@ The transformed CDF can be used to perform the [Kolmogorov-Smirnov test](https:/
     
 ## :warning: Caveat :warning:
 Using the histogram decomposition instead of computing the improper integral considerably speeds up the computation of the PDF/CDF. Still, it can be time consuming. Thus the ``fit`` method can be slow. Indeed, the [example above](#fit-the-empirical-data) takes about 100 seconds to complete on an Intel i9 @ 2.30 GHz.
+
+
+## Cite this work
+If you use this tool in your research, please cite reference [[2]](#2).
     
 
 ## References
