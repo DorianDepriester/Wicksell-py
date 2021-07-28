@@ -97,4 +97,4 @@ Using the histogram decomposition instead of computing the improper integral con
 problem. *Biometrika*, 17(1/2):84–99, DOI: [10.2307/2332027](https://www.doi.org/10.2307/2332027)
 
 <a id="2">[2]</a>  Depriester, D. and Kubler, R. (2021). 
-Grain size estimation in polycrystals: solving the corpuscle problem using Maximum Likelihood Estimation. *Journal of Structural Geology*, 104418, ISSN 0191-8141, DOI: [10.1016/j.jsg.2021.104418](https://doi.org/10.1016/j.jsg.2021.104418)
+Grain size estimation in polycrystals: solving the corpuscle problem using Maximum Likelihood Estimation. *Journal of Structural Geology*, 151:104418, ISSN 0191-8141, DOI: [10.1016/j.jsg.2021.104418](https://doi.org/10.1016/j.jsg.2021.104418)
