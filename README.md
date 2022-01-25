@@ -13,7 +13,7 @@ The histogram approximation is used to compute the Wicksell's equation of the co
 
 The aim of this project is to provide a robust and convinient way to compute the statistics of apparents disks (related to values of *r*). It is based on histogram decomposition of *f*, as detailed in [[2]](#2).
 
-## Usage
+## Basic use
 Just import the ``wicksell_trans`` class
 
     from wicksell_transform import wicksell_trans
