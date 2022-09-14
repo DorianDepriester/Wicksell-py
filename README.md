@@ -3,12 +3,11 @@ A Python class for computing Wicksell's transforms of continuous distributions.
 
 ## Purpose
 Consider a medium consisting in a large number of spheres whose radii follow a Probability Density Function (PDF) *f*. 
-If sections of the medium are made at random lattitudes, the radius apparents disks (denoted *r* below) would follow the PDF [[1]](#1):
+If sections of the medium are made at random lattitudes, the radius of apparent disks (denoted *r* below) would follow the PDF [[1]](#1):
 
 ![a](https://latex.codecogs.com/png.image?\dpi{110}&space;\bg_white&space;\tilde{f}(r)=\frac{r}{E}\int_{r}^{\infty}\frac{f(R)}{\sqrt{R^2-r^2}}\mathrm{d}R)
 
-where *E* is the mean value of *f*. The previous formula is refered as the Wicksell's equation. 
-The histogram approximation is used to compute the Wicksell's equation of the continuous distribution *f*.
+where *E* is the mean value of *f*. The previous formula is refered to as the Wicksell's equation. 
 
 
 The aim of this project is to provide a robust and convinient way to compute the statistics of apparents disks (related to values of *r*). It is based on histogram decomposition of *f*, as detailed in [[2]](#2).
@@ -22,7 +21,7 @@ and create an instance of that class, passing the underlying distribution (that 
 
     wt = wicksell_trans(distro)
     
-In the example above, ``distro`` must be continuous distribution, as defined in the [scipy's stats](https://docs.scipy.org/doc/scipy/reference/stats.html) module. Finally, use this instance as a usual scipy's distribution. All the parameters related to the underlying distribution are inferred to the transformed one. The ``loc`` and ``scale`` parameters of the underlying distribution are renamed ``baseloc`` and ``basescale``, respectivelly.
+In the example above, ``distro`` must be a continuous distribution, as defined in the [scipy's stats](https://docs.scipy.org/doc/scipy/reference/stats.html) module. Finally, use this instance as a usual scipy's distribution. All the parameters related to the underlying distribution are inferred to the transformed one. The ``loc`` and ``scale`` parameters of the underlying distribution are renamed ``baseloc`` and ``basescale``, respectivelly.
 
 ## Example
 In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html) distribion is considered.
