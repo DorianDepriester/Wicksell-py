@@ -31,12 +31,16 @@ For equiaxed materials, grains are usually considered as perfect spheres. Indeed
 equation. Let $f(R)$ be the Probability Density Function (PDF) of the radii $R$ of spheres randomly located in space. If these spheres are cut at random latitudes, 
 the resulting disks will have radii $r$ following the PDF $\tilde{f}(r)$ so that:
 
-$$\tilde{f}(r)=\frac{r}{E}\int_0^\infty \frac{f(R)}{\sqrt{R^2-r^2}}\mathrm{d}R$$
+\begin{equation}
+\tilde{f}(r)=\frac{r}{E}\int_0^\infty \frac{f(R)}{\sqrt{R^2-r^2}}\mathrm{d}R
+\label{eq:Wicksell}
+\end{equation}
 
 where $E$ is the expectation on $R$:
 
 $$E=\int_0^\infty Rf(R)\mathrm{d}R$$
 
 # Implementation
+A Python subclass of the `scipy.stats.rv_continuous` module [@Virtanen:2020] have been developped so that the user can easily compute the Wicksell transform of any kind of continuous distribution. The numerical compution of the Wicksell transform \autoref{eq:Wicksell} works on the constant-quantile histogram decomposition [@Depriester:2021] and takes advantage mathematical developpments made in an earlier work [@Depriester:2019].
 
 
