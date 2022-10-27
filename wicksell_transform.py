@@ -59,7 +59,7 @@ class wicksell_trans(stats.rv_continuous):
             shapes = 'baseloc, basescale'
         else:
             shapes = basedist.shapes + ', baseloc, basescale'
-        super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=basedist.b, name=new_name, **kwargs)
+        super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=np.inf, name=new_name, **kwargs)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
         self.Rmax = -1.0
@@ -86,20 +86,27 @@ class wicksell_trans(stats.rv_continuous):
             return 0.0
 
     def _rv_cont2hist(self, *args, **kwargs):
-        frozen_dist = self.basedist(*args, **kwargs)
-        if frozen_dist.support()[1] == np.inf:
-            q_max = self.nbins / (self.nbins + 1)
+        if self.basedist == stats.uniform:
+            scale = kwargs['scale']
+            lb = kwargs['loc']
+            ub = lb + scale
+            mid_points = (lb + ub) / 2
+            freq = 1/scale
         else:
-            q_max = 1.0
-        q = np.linspace(0, q_max, self.nbins + 1)
-        lb = frozen_dist.ppf(q)
-        if self.Rmax > lb[-1] and q_max != 1.0:
-            lb = np.append(lb, 1.01*self.Rmax)
-        ub = lb[1:]
-        lb = lb[:-1]
-        mid_points = (lb + ub) / 2
-        freq = frozen_dist.cdf(ub) - frozen_dist.cdf(lb)
-        freq = freq / np.sum(freq)
+            frozen_dist = self.basedist(*args, **kwargs)
+            if frozen_dist.support()[1] == np.inf:
+                q_max = self.nbins / (self.nbins + 1)
+            else:
+                q_max = 1.0
+            q = np.linspace(0, q_max, self.nbins + 1)
+            lb = frozen_dist.ppf(q)
+            if self.Rmax > lb[-1] and q_max != 1.0:
+                lb = np.append(lb, 1.001*self.Rmax)
+            ub = lb[1:]
+            lb = lb[:-1]
+            mid_points = (lb + ub) / 2
+            freq = frozen_dist.cdf(ub) - frozen_dist.cdf(lb)
+            freq = freq / np.sum(freq)
         return lb, mid_points, ub, freq
 
     def _pdf_untruncated_single(self, x, *args):
@@ -160,21 +167,21 @@ class wicksell_trans(stats.rv_continuous):
         isf_0 = self.basedist.isf(p, *args, **kwargs)
         return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) + p - 1, isf_0)
 
-    def _rvs(self, *args):
-        if self._size == ():
+    def _rvs(self, *args, size=None, random_state=None):
+        if size is None:
             n_req = 1
         else:
-            n_req = np.prod(self._size)
+            n_req = np.prod(size)
         nbr_spheres = max(10000, int(10*n_req))   # Number of spheres to choose
-        r = self.basedist.rvs(*args, size=nbr_spheres, random_state=self._random_state)
+        r = self.basedist.rvs(*args, size=nbr_spheres, random_state=random_state)
         centers = np.cumsum(2 * r) - r    # centers
-        x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=self._random_state)
+        x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=random_state)
         i = [np.argmin((x_pick_i - centers) ** 2 - r ** 2) for x_pick_i in x_pick]
         r2 = r[i] ** 2 - (x_pick - centers[i]) ** 2
-        if self._size == ():
+        if size is None:
             return np.sqrt(r2[0])
         else:
-            return np.sqrt(r2).reshape(self._size)
+            return np.sqrt(r2).reshape(size)
 
     def _moment_distance(self, moments, *args):
         statistics = self.stats(*args, moments='mvsk')
@@ -190,7 +197,10 @@ class wicksell_trans(stats.rv_continuous):
         poor idea. Still, it ensures that each value in the initial guess are valid, i.e.:
             self._argcheck(theta_0)==True
         """
-        theta_0 = self.basedist._fitstart(data)
+        if self.basedist == stats.uniform:
+            theta_0 = (max(data)/2, max(data))
+        else:
+            theta_0 = self.basedist._fitstart(data)
         return theta_0 + (0.0, 1.0)
 
     def fit(self, data, *args, floc=0.0, fscale=1.0, **kwds):
