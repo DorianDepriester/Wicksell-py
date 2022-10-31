@@ -29,7 +29,7 @@ microscopy or Scanning Electron Microscopy). Thus, the real grain size distribut
 2D apparent size distribution and the real 3D distribution is commonly refered to as the corpuscle problem. 
 
 For equiaxed materials, grains are usually considered as perfect spheres. Indeed, in this case, the corpuscle problem can be solved through the so-called Wicksell
-equation. Let $f(R)$ be the Probability Density Function (PDF) of the radii $R$ of spheres randomly located in space. If these spheres are cut at random latitudes, 
+equation [@Wicksell:1925]. Let $f(R)$ be the Probability Density Function (PDF) of the radii $R$ of spheres randomly located in space. If these spheres are cut at random latitudes, 
 the resulting disks will have radii $r$ following the PDF $\tilde{f}(r)$ so that:
 
 \begin{equation}
