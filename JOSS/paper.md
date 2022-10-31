@@ -1,5 +1,5 @@
 ---
-title: 'Wycksell-py: A Python integration for the corpuscle problem'
+title: 'Wicksell-py: A Python integration for the corpuscle problem'
 tags:
   - Python
   - stereology
@@ -44,6 +44,4 @@ $$E=\int_0^\infty Rf(R)\mathrm{d}R$$
 The most widely used technique to *unfold* a given distribution of apparent radii is the so-called Saltykov technique [@Slatikov:1967]. This method uses a finite histogram (bins) then uses \autoref{eq:Wicksell} to get the unfolded histogram. @Lopez-Sanchez:2018 has proposed a tool to automatically fit a continuous distribution (e.g. lognormal) on the unfolded histogram.
 
 # Implementation
-A Python subclass of the `scipy.stats.rv_continuous` module [@Virtanen:2020] have been developped so that the user can easily compute the Wicksell transform of any kind of continuous distribution. The numerical computation of the Wicksell transform \autoref{eq:Wicksell} works on the constant-quantile histogram decomposition [@Depriester:2021] and takes advantage mathematical developpments made in an earlier work [@Depriester:2019]. Hence, this allows to easily fit a continuous distribution on the unfolded distribution (through the `scipy.stats.rv_continuous.fit` inherited method).
-
-
+A Python subclass of the `scipy.stats.rv_continuous` module [@Virtanen:2020] has been developped so that the user can easily compute the Wicksell transform of any kind of continuous distribution. The numerical computation of the Wicksell transform \eqref{eq:Wicksell} works on the constant-quantile histogram decomposition [@Depriester:2021] and takes advantage mathematical developpments made in an earlier work [@Depriester:2019]. Hence, this allows to easily fit a continuous distribution on the unfolded distribution (through the `scipy.stats.rv_continuous.fit` inherited method).
