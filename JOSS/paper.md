@@ -24,7 +24,7 @@ size (in 2D) and the actual ones (in 3D) is indeed given by the so-called Wickse
 subclass from the `scipy.stats` module.
 
 # Statement of need
-In materials sciences, such as petrology, geology or metallography, the microstructure of granular materials are usually characterized by 2D observations (e.g. optical
+In materials sciences, such as petrology, geology or metallography, the microstructures of granular materials are usually characterized by 2D observations (e.g. optical
 microscopy or Scanning Electron Microscopy). Thus, the real grain size distribution cannot be directly inferred from these measurements, and the relationship between the
 2D apparent size distribution and the real 3D distribution is commonly refered to as the corpuscle problem. 
 
@@ -41,7 +41,9 @@ where $E$ is the expectation on $R$:
 
 $$E=\int_0^\infty Rf(R)\mathrm{d}R$$
 
+The most widely used technique to *unfold* a given distribution of apparent radii is the so-called Saltykov technique [@Slatikov:1967]. This method uses a finite histogram (bins) then uses \autoref{eq:Wicksell} to get the unfolded histogram. @Lopez-Sanchez:2018 has proposed a tool to automatically fit a continuous distribution (e.g. lognormal) on the unfolded histogram.
+
 # Implementation
-A Python subclass of the `scipy.stats.rv_continuous` module [@Virtanen:2020] have been developped so that the user can easily compute the Wicksell transform of any kind of continuous distribution. The numerical compution of the Wicksell transform \autoref{eq:Wicksell} works on the constant-quantile histogram decomposition [@Depriester:2021] and takes advantage mathematical developpments made in an earlier work [@Depriester:2019].
+A Python subclass of the `scipy.stats.rv_continuous` module [@Virtanen:2020] have been developped so that the user can easily compute the Wicksell transform of any kind of continuous distribution. The numerical computation of the Wicksell transform \autoref{eq:Wicksell} works on the constant-quantile histogram decomposition [@Depriester:2021] and takes advantage mathematical developpments made in an earlier work [@Depriester:2019]. Hence, this allows to easily fit a continuous distribution on the unfolded distribution (through the `scipy.stats.rv_continuous.fit` inherited method).
 
 
