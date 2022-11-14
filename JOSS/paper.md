@@ -45,3 +45,9 @@ The most widely used technique to *unfold* a given distribution of apparent radi
 
 # Implementation
 A Python subclass of the `scipy.stats.rv_continuous` module [@Virtanen:2020] has been developped so that the user can easily compute the Wicksell transform of any kind of continuous distribution. The numerical computation of the Wicksell transform \eqref{eq:Wicksell} works on the constant-quantile histogram decomposition [@Depriester:2021] and takes advantage mathematical developpments made in an earlier work [@Depriester:2019]. Hence, this allows to easily fit a continuous distribution on the unfolded distribution (through the `scipy.stats.rv_continuous.fit` inherited method).
+
+# Acknowledgements
+
+The author acknowledges contributions from Dr. Régis Kubler.
+
+# References
