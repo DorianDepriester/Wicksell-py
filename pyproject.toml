@@ -1,5 +1,5 @@
 [project]
-name = "Wicksell-py"
+name = "Wicksell"
 version = "1.0.0"
 authors = [
   { name="Dorian Depriester", email="dorian.depriester@ensam.eu" },
