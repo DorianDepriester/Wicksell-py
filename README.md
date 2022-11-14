@@ -12,8 +12,8 @@ where *E* is the mean value of *f*. The previous formula is refered to as the Wi
 
 The aim of this project is to provide a robust and convinient way to compute the statistics of apparents disks (related to values of *r*). It is based on histogram decomposition of *f*, as detailed in [[2]](#2).
 
-## Basic use
-Just import the ``wicksell_trans`` class
+## Installation and use
+First, add the file ``wicksell_transform.py`` to your working Python directory. Then, just import the ``wicksell_trans`` class
 
     from wicksell_transform import wicksell_trans
     
