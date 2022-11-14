@@ -1,0 +1,22 @@
+[project]
+name = "Wicksell-py"
+version = "1.0.0"
+authors = [
+  { name="Dorian Depriester", email="dorian.depriester@ensam.eu" },
+]
+description = "Module for computing the Wicksell transform of continuous distributions."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+  'scipy >= 1.9.1',
+]
+
+[project.urls]
+"Homepage" = "https://github.com/DorianDepriester/Wicksell-py/"
+"Bug Tracker" = "https://github.com/DorianDepriester/Wicksell-py/issues"
