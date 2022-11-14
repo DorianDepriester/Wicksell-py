@@ -1,6 +1,6 @@
 import scipy.stats as stats
 import numpy as np
-from wicksell_transform import wicksell_trans
+from Wicksell.transform import wicksell_trans
 from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 
@@ -41,10 +41,10 @@ if __name__ == "__main__":
         axs[i].set_ylim(bottom=0.0, top=1.1*max(pdf))
         axs[i].plot(x, pdf, 'r', label='PDF')
         axs[i].plot(x, tpdf, 'b', label='transf. PDF')
-        axs[i].legend()
         axs[i].set_xlabel('R')
         axs[i].set_ylabel('Frequency')
         axs[i].hist(sample, bins=25, density=True, label='Random samp.')
+        axs[i].legend()
         axs[i].set_title(dist)
 
         if dist == 'uniform':
