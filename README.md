@@ -12,14 +12,17 @@ where *E* is the mean value of *f*. The previous formula is refered to as the Wi
 
 The aim of this project is to provide a robust and convinient way to compute the statistics of apparents disks (related to values of *r*). It is based on histogram decomposition of *f*, as detailed in [[2]](#2).
 
-## Installation and use
-First, add the file ``wicksell_transform.py`` to your working Python directory. Then, just import the ``wicksell_trans`` class
+## Installation
+````pip install Wicksell````
 
-    from wicksell_transform import wicksell_trans
+## Basic use
+In your Python script, import the class constructor for ``WicksellTransform``:
+
+    from Wicksell.transform import WicksellTransform
     
 and create an instance of that class, passing the underlying distribution (that used for computing the Wicksell transform).
 
-    wt = wicksell_trans(distro)
+    wt = WicksellTransform(distro)
     
 In the example above, ``distro`` must be a continuous distribution, as defined in the [scipy's stats](https://docs.scipy.org/doc/scipy/reference/stats.html) module. Finally, use this instance as a usual scipy's distribution. All the parameters related to the underlying distribution are inferred to the transformed one. The ``loc`` and ``scale`` parameters of the underlying distribution are renamed ``baseloc`` and ``basescale``, respectivelly.
 
@@ -28,9 +31,9 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
 
     import scipy.stats as stats
     import numpy as np
-    from wicksell_transform import wicksell_trans
+    from  Wicksell.transform import WicksellTransform
     
-    wlognorm = wicksell_trans(stats.lognorm)
+    wlognorm = WicksellTransform(stats.lognorm)
     s = 0.1                 # Shape parameter for lognormal
     mu = 0.5
     baseloc = 0
