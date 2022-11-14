@@ -1,6 +1,6 @@
 import scipy.stats as stats
 import numpy as np
-from Wicksell.transform import wicksell_trans
+from Wicksell.transform import WicksellTransform
 from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     for i, dist in enumerate(distros):
         basedist = distros[dist]['distro']
-        trans_dist = wicksell_trans(basedist)
+        trans_dist = WicksellTransform(basedist)
         baseloc = distros[dist]['baseloc']
         basescale = distros[dist]['basescale']
         param = distros[dist]['param']

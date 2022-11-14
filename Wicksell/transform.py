@@ -42,7 +42,7 @@ def cdf_uni(x, rmin, rmax):
     return cdf
 
 
-class wicksell_trans(stats.rv_continuous):
+class WicksellTransform(stats.rv_continuous):
     """
     Wicksell's transform of a given distribution.
 
