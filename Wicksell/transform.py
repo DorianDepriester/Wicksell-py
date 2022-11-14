@@ -13,30 +13,35 @@ import scipy.integrate as integrate
 
 def pdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
-    _ , rmax_m = np.meshgrid(x, rmax)
+    _, rmax_m = np.meshgrid(x, rmax)
     pdf = np.zeros(shape=x_m.shape)
     left = (0 < x_m) & (x_m <= rmin_m)
     x_l = x_m[left]
     pdf[left] = 2 * x_l / (rmax_m[left] ** 2 - rmin_m[left] ** 2) * log(
-                             (rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2)) /
-                             (rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)))
+        (rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2)) /
+        (rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)))
     center = (rmin_m < x_m) & (x_m <= rmax_m)
     x_c = x_m[center]
-    pdf[center] = 2 * x_c / (rmax_m[center] ** 2 - rmin_m[center] ** 2) * log((rmax_m[center] + sqrt(rmax_m[center] ** 2 - x_c ** 2)) / x_c)
+    pdf[center] = 2 * x_c / (rmax_m[center] ** 2 - rmin_m[center] ** 2) * log(
+        (rmax_m[center] + sqrt(rmax_m[center] ** 2 - x_c ** 2)) / x_c)
     return pdf
+
 
 def cdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
-    _ , rmax_m = np.meshgrid(x, rmax)
+    _, rmax_m = np.meshgrid(x, rmax)
     cdf = np.zeros(shape=x_m.shape)
     left = (0 < x_m) & (x_m <= rmin_m)
     x_l = x_m[left]
-    gamma = rmax_m[left] * sqrt(rmax_m[left] ** 2 - x_l ** 2) - x_l ** 2 * log(rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2))
-    cdf[left] = 1 - (gamma + x_l ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)) - rmin_m[left] * sqrt(rmin_m[left] ** 2 - x_l ** 2))\
-               / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
+    gamma = rmax_m[left] * sqrt(rmax_m[left] ** 2 - x_l ** 2) - x_l ** 2 * log(
+        rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2))
+    cdf[left] = 1 - (gamma + x_l ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)) - rmin_m[left] * sqrt(
+        rmin_m[left] ** 2 - x_l ** 2)) \
+                / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
     center = (rmin_m < x_m) & (x_m <= rmax_m)
     xc = x_m[center]
-    gamma = rmax_m[center] * sqrt(rmax_m[center] ** 2 - xc ** 2) - xc ** 2 * log(rmax_m[center] + sqrt(rmax_m[center] ** 2 - xc ** 2))
+    gamma = rmax_m[center] * sqrt(rmax_m[center] ** 2 - xc ** 2) - xc ** 2 * log(
+        rmax_m[center] + sqrt(rmax_m[center] ** 2 - xc ** 2))
     cdf[center] = 1 - (gamma + xc ** 2 * log(xc)) / (rmax_m[center] ** 2 - rmin_m[center] ** 2)
     cdf[x_m > rmax_m] = 1.0
     return cdf
@@ -65,7 +70,6 @@ class WicksellTransform(stats.rv_continuous):
         self.Rmax = -1.0
         self.rmin = rmin
 
-
     def _argcheck(self, *args):
         """
         Check that all the following conditions are valid:
@@ -91,7 +95,7 @@ class WicksellTransform(stats.rv_continuous):
             lb = kwargs['loc']
             ub = lb + scale
             mid_points = (lb + ub) / 2
-            freq = 1/scale
+            freq = 1 / scale
         else:
             frozen_dist = self.basedist(*args, **kwargs)
             if frozen_dist.support()[1] == np.inf:
@@ -101,7 +105,7 @@ class WicksellTransform(stats.rv_continuous):
             q = np.linspace(0, q_max, self.nbins + 1)
             lb = frozen_dist.ppf(q)
             if self.Rmax > lb[-1] and q_max != 1.0:
-                lb = np.append(lb, 1.001*self.Rmax)
+                lb = np.append(lb, 1.001 * self.Rmax)
             ub = lb[1:]
             lb = lb[:-1]
             mid_points = (lb + ub) / 2
@@ -172,9 +176,9 @@ class WicksellTransform(stats.rv_continuous):
             n_req = 1
         else:
             n_req = np.prod(size)
-        nbr_spheres = max(10000, int(10*n_req))   # Number of spheres to choose
+        nbr_spheres = max(10000, int(10 * n_req))  # Number of spheres to choose
         r = self.basedist.rvs(*args, size=nbr_spheres, random_state=random_state)
-        centers = np.cumsum(2 * r) - r    # centers
+        centers = np.cumsum(2 * r) - r  # centers
         x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=random_state)
         i = [np.argmin((x_pick_i - centers) ** 2 - r ** 2) for x_pick_i in x_pick]
         r2 = r[i] ** 2 - (x_pick - centers[i]) ** 2
@@ -193,12 +197,12 @@ class WicksellTransform(stats.rv_continuous):
 
     def _fitstart(self, data, args=None):
         """
-        Here, we use the _fitstats method from the base distribution. Note that using this as an initial guess is a very
+        Here, we use the _fitstarts method from the base distribution. Note that using this as an initial guess is a very
         poor idea. Still, it ensures that each value in the initial guess are valid, i.e.:
             self._argcheck(theta_0)==True
         """
         if self.basedist == stats.uniform:
-            theta_0 = (max(data)/2, max(data))
+            theta_0 = (max(data) / 2, max(data))
         else:
             theta_0 = self.basedist._fitstart(data)
         return theta_0 + (0.0, 1.0)
