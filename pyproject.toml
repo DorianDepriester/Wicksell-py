@@ -18,6 +18,9 @@ dependencies = [
   'numpy >= 1.23.3',
 ]
 
+[tool.setuptools]
+packages = ["Wicksell"]
+
 [project.urls]
 "Homepage" = "https://github.com/DorianDepriester/Wicksell-py/"
 "Bug Tracker" = "https://github.com/DorianDepriester/Wicksell-py/issues"
