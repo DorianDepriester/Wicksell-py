@@ -33,8 +33,8 @@ if __name__ == "__main__":
         basescale = distros[dist]['basescale']
         param = distros[dist]['param']
         pdf = basedist.pdf(x, *param, loc=baseloc, scale=basescale)
-        tpdf = trans_dist.pdf(x, *param, baseloc=baseloc, basescale=basescale)
-        sample = trans_dist.rvs(*param, baseloc=baseloc, basescale=basescale, size=500)
+        tpdf = trans_dist.pdf(x, *param, loc=baseloc, scale=basescale)
+        sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=500)
 
         axs[i].set_ylim(bottom=0.0, top=1.1 * max(pdf))
         axs[i].plot(x, pdf, 'r', label='PDF')
@@ -48,12 +48,12 @@ if __name__ == "__main__":
         if dist == 'uniform':
             theta = trans_dist.fit(sample)
         elif dist == 'positiveNormal':
-            theta = trans_dist.fit(sample, fbaseloc=0.0, fbasescale=1)
+            theta = trans_dist.fit(sample, floc=0.0, fscale=1)
         else:
-            theta = trans_dist.fit(sample, fbaseloc=0.0)
-        ks = stats.kstest(sample, trans_dist.cdf, theta)
+            theta = trans_dist.fit(sample, floc=0.0)
         print("Distribution: " + dist)
         print("Fit: {}".format(theta))
+        ks = stats.kstest(sample, trans_dist.cdf, theta)
         print('KS test: {}'.format(ks))
         print("---")
     plt.show()

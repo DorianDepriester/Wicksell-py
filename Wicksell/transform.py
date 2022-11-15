@@ -80,9 +80,10 @@ class WicksellTransform(stats.rv_continuous):
             shapes = 'baseloc, basescale'
         else:
             shapes = basedist.shapes + ', baseloc, basescale'
-        super().__init__(shapes=shapes, a=max(0.0, basedist.a), b=np.inf, name=new_name, **kwargs)
+        super().__init__(shapes=basedist.shapes, a=max(0.0, basedist.a), b=np.inf, name=new_name, **kwargs)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
+        self._parse_args = self._parse_args_modified
         self.Rmax = -1.0
         self.rmin = rmin
 
@@ -93,10 +94,15 @@ class WicksellTransform(stats.rv_continuous):
         - basescale is positive
         - the support of base distribution is a subset of [0, +inf)
         """
-        return self.basedist._argcheck(*args[:-2]) and (self.basedist.support(*args)[0] >= 0.0) and (args[-1] > 0.0)
+        args, _, _ = self.basedist._parse_args(*args)
+        return self.basedist._argcheck(*args) and (self.basedist.support(*args)[0] >= 0.0)
+
+    def _parse_args_modified(self, *args, **kwargs):
+        args, loc, scale = self.basedist._parse_args(*args, **kwargs)
+        return args + (loc, scale), 0, 1
 
     def wicksell(self, x, *args, **kwargs):
-        *args, baseloc, basescale = args
+        args, baseloc, basescale = self._parse_args(*args, **kwargs)
         frozen_dist = self.basedist(*args, loc=baseloc, scale=basescale)
         E = frozen_dist.mean()
         if 0.0 < x:
@@ -106,9 +112,9 @@ class WicksellTransform(stats.rv_continuous):
             return 0.0
 
     def _rv_cont2hist(self, *args, **kwargs):
+        args, loc, scale = self.basedist._parse_args(*args, **kwargs)
         if self.basedist == stats.uniform:
-            scale = kwargs['scale']
-            lb = kwargs['loc']
+            lb = loc
             ub = lb + scale
             mid_points = (lb + ub) / 2
             freq = 1 / scale
@@ -130,7 +136,7 @@ class WicksellTransform(stats.rv_continuous):
         return lb, mid_points, ub, freq
 
     def _pdf_untruncated_single(self, x, *args):
-        *args, baseloc, basescale = args
+        args, baseloc, basescale = self.basedist._parse_args(*args)
         if x < self.rmin:
             return 0.0
         else:
@@ -140,7 +146,7 @@ class WicksellTransform(stats.rv_continuous):
             return np.dot(P.T, MF) / np.sum(MF)
 
     def _cdf_untruncated_single(self, x, *args):
-        *args, baseloc, basescale = args
+        args, baseloc, basescale = self.basedist._parse_args(*args)
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         MF = freq * mid_points
         C = cdf_uni(x, lb, ub)
@@ -221,10 +227,11 @@ class WicksellTransform(stats.rv_continuous):
             theta_0 = (max(data) / 2, max(data))
         else:
             theta_0 = self.basedist._fitstart(data)
-        return theta_0 + (0.0, 1.0)
+        return theta_0
 
-    def fit(self, data, *args, floc=0.0, fscale=1.0, **kwargs):
-        return super().fit(data, *args, floc=floc, fscale=fscale, **kwargs)
+#    def fit(self, data, *args, **kwargs):
+#        theta = super().fit(data, *args,  **kwargs)
+#        return theta[:-2]
 
     def fit_moments(self, data, *args):
         moments = (np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data))
