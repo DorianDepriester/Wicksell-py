@@ -10,7 +10,7 @@ if __name__ == "__main__":
             {"distro": stats.uniform,
              "param": [],
              "baseloc": 1,
-             "basescale": 2},
+             "basescale": 1},
         "positiveNormal":
             {"distro": posnorm_gen(),
              "param": [0.2, 0.5],

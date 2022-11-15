@@ -223,8 +223,8 @@ class WicksellTransform(stats.rv_continuous):
             theta_0 = self.basedist._fitstart(data)
         return theta_0 + (0.0, 1.0)
 
-    def fit(self, data, *args, floc=0.0, fscale=1.0, **kwds):
-        return super().fit(data, *args, floc=floc, fscale=fscale, **kwds)
+    def fit(self, data, *args, floc=0.0, fscale=1.0, **kwargs):
+        return super().fit(data, *args, floc=floc, fscale=fscale, **kwargs)
 
     def fit_moments(self, data, *args):
         moments = (np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data))
