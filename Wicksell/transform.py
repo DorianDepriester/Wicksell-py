@@ -37,7 +37,7 @@ def cdf_uni(x, rmin, rmax):
         rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2))
     cdf[left] = 1 - (gamma + x_l ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)) - rmin_m[left] * sqrt(
         rmin_m[left] ** 2 - x_l ** 2)) \
-                / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
+        / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
     center = (rmin_m < x_m) & (x_m <= rmax_m)
     xc = x_m[center]
     gamma = rmax_m[center] * sqrt(rmax_m[center] ** 2 - xc ** 2) - xc ** 2 * log(
@@ -49,14 +49,30 @@ def cdf_uni(x, rmin, rmax):
 
 class WicksellTransform(stats.rv_continuous):
     """
-    Wicksell's transform of a given distribution.
-
-    Reference:
-     - Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
-     - Depriester D and Kubler R (2019), doi:10.5566/ias.2133
+    Wicksell transform of a given distribution.
     """
 
     def __init__(self, basedist, nbins=1000, rmin=0.0, **kwargs):
+        """
+        Creates a new distribution, defined as the Wicksell transform of an underlying continuous distribution [1].
+
+        Parameters
+        ----------
+        basedist : scipy.stats.rv_continuous
+            The distribution to be transformed (base-distribution)
+
+        rmin : float, optional
+            The value at which the transformed distribution is left-truncated (default is 0, i.e. no truncation)
+
+        nbins : integer, optional
+            The number of bins to use for constant-quantile histogram decomposition of the base-distribution (default is
+             1000). See ref. [1] for details.
+
+        References
+        ----------
+         .. [1] Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
+         .. [2] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
+        """
         self.basedist = basedist
         self.nbins = nbins
         new_name = 'Wicksell''s transform of {}'.format(basedist.name)
