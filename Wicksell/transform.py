@@ -124,6 +124,10 @@ class WicksellTransform(stats.rv_continuous):
             return 0.0
 
     def _rv_cont2hist(self, *args, **kwargs):
+        """
+        Converts the continuous distribution into a finite histogram. Each class of this histogram has constant
+        frequency (constant-quantile decomposition).
+        """
         args, loc, scale = self.basedist._parse_args(*args, **kwargs)
         if self.basedist == stats.uniform:
             lb = loc
@@ -148,6 +152,9 @@ class WicksellTransform(stats.rv_continuous):
         return lb, mid_points, ub, freq
 
     def _pdf_untruncated_single(self, x, *args):
+        """
+        Numerically compute the (untruncated) PDF of the Wicksell transform using the histogram decomposition.
+        """
         args, baseloc, basescale = self.basedist._parse_args(*args)
         if x < self.rmin:
             return 0.0
@@ -158,6 +165,9 @@ class WicksellTransform(stats.rv_continuous):
             return np.dot(P.T, MF) / np.sum(MF)
 
     def _cdf_untruncated_single(self, x, *args):
+        """
+        Numerically compute the (untruncated) CDF of the Wicksell transform using the histogram decomposition.
+        """
         args, baseloc, basescale = self.basedist._parse_args(*args)
         lb, mid_points, ub, freq = self._rv_cont2hist(*args, loc=baseloc, scale=basescale)
         MF = freq * mid_points
@@ -165,6 +175,9 @@ class WicksellTransform(stats.rv_continuous):
         return np.dot(C.T, MF) / np.sum(MF)
 
     def _pdf(self, x, *args):
+        """
+        Numerically compute the (possibly truncated) PDF of the Wicksell transform using the histogram decomposition.
+        """
         if isinstance(x, int):
             self.Rmax = float(x)
         elif isinstance(x, float):
@@ -177,6 +190,9 @@ class WicksellTransform(stats.rv_continuous):
             return self._pdf_untruncated_vec(x, *args) / (1 - self._cdf_untruncated_vec(self.rmin, *args))
 
     def _cdf(self, x, *args):
+        """
+        Numerically compute the (possibly truncated) CDF of the Wicksell transform using the histogram decomposition.
+        """
         if isinstance(x, int):
             self.Rmax = float(x)
         elif isinstance(x, float):
@@ -190,22 +206,37 @@ class WicksellTransform(stats.rv_continuous):
             return (self._cdf_untruncated_vec(x, *args) - trunc) / (1 - trunc)
 
     def _stats(self, *args):
+        """
+        For the sake a efficiency, the stats are computed from RVs.
+        """
         data = self.rvs(*args, size=10000)
         return np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data)
 
-    def expect(self, *args, baseloc=0.0, basescale=1.0, **kwargs):
-        integrand = lambda x: self.wicksell(x, *args, loc=baseloc, scale=basescale, **kwargs) * x
+    def expect(self, *args, **kwargs):
+        """
+        The expectation is estimated from full intragration of the full intragration of Wicksell transform.
+        """
+        integrand = lambda x: self.wicksell(x, *args, **kwargs) * x
         return integrate.quad(integrand, 0, np.inf)[0]
 
     def _ppf(self, p, *args, **kwargs):
+        """
+        Quantile function
+        """
         ppf_0 = self.basedist.ppf(p, *args, **kwargs)
         return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) - p, ppf_0)
 
     def _isf(self, p, *args, **kwargs):
+        """
+        Inverse survival function
+        """
         isf_0 = self.basedist.isf(p, *args, **kwargs)
         return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) + p - 1, isf_0)
 
     def _rvs(self, *args, size=None, random_state=None):
+        """
+        Random variate generator.
+        """
         if size is None:
             n_req = 1
         else:
@@ -221,15 +252,11 @@ class WicksellTransform(stats.rv_continuous):
         else:
             return np.sqrt(r2).reshape(size)
 
-    def _moment_distance(self, moments, *args):
-        statistics = self.stats(*args, moments='mvsk')
-        d = 0.0
-        for i, moment in enumerate(moments):
-            di = (statistics[i] - moments[i]) ** 2
-            d += 1.0 / (1.0 + i) * di
-        return d
-
     def _unpack_loc_scale(self, theta):
+        """
+        Fool the fit() method so that it cannot try to reduce the function to minimize. This is because loc and scale
+        parameters must be passed to the base-distribution (and not treated as-is).
+        """
         loc, scale, args = self.basedist._unpack_loc_scale(theta)
         return 0, 1, args + (loc, scale)
 
@@ -244,10 +271,6 @@ class WicksellTransform(stats.rv_continuous):
         else:
             theta_0 = self.basedist._fitstart(data)
         return theta_0
-
-#    def fit(self, data, *args, **kwargs):
-#        theta = super().fit(data, *args,  **kwargs)
-#        return theta[:-2]
 
     def fit_moments(self, data, *args):
         moments = (np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data))
