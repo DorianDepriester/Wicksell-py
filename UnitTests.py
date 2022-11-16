@@ -52,7 +52,7 @@ if __name__ == "__main__":
         axs[i].plot(x, pdf, 'r', label='PDF')
         axs[i].plot(x, tpdf, 'b', label='transf. PDF')
         axs[i].plot(x, trans_dist.pdf(x, *theta), 'b', linestyle='dotted', label='Fit')
-        axs[i].hist(sample, bins=25, density=True, label='Rand. samp.')
+        axs[i].hist(sample, ec='yellow', fc='orange', bins=25, density=True, label='Rand. samp.')
         axs[i].set_xlabel('R')
         axs[i].set_ylabel('Frequency')
         axs[i].legend()
