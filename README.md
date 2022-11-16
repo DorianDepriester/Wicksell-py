@@ -36,18 +36,17 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
     wlognorm = WicksellTransform(stats.lognorm)
     s = 0.1                 # Shape parameter for lognormal
     mu = 0.5
-    baseloc = 0
-    basescale = np.exp(mu)  # loc parameter of underlying distribution
+    scale = np.exp(mu)  # loc parameter of underlying distribution
     
 ### Compute the transformed PDF/CDF
 
     x = np.linspace(0, 3, 1000)
-    pdf = wlognorm.pdf(x, s, baseloc, basescale)
-    cdf = wlognorm.cdf(x, s, baseloc, basescale)
+    pdf = wlognorm.pdf(x, s, scale=scale)
+    cdf = wlognorm.cdf(x, s, scale=scale)
 
 ### Generate random variables
 
-    data = wlognorm.rvs(s, baseloc, basescale, size=1000, random_state=0)
+    data = wlognorm.rvs(s, scale=scale, size=1000, random_state=0)
     
 The random state is fixed here for reproductibility.
     
@@ -72,15 +71,15 @@ The random state is fixed here for reproductibility.
 
 Empirical data can be used to fit the distribution in odrer to get the optimal distribution parameters:
 
-    theta = wlognorm.fit(data, fbaseloc=0.0)
+    theta = wlognorm.fit(data, floc=0.0)
     
-Here, the fit is made assuming that the location parameter is 0 (as a reminder, this parameter has been renamed ``baseloc``). The ``fit`` method is a build-in method provided in all rv_continuous distributions. See the [related documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.fit.html#scipy.stats.rv_continuous.fit) for details.
+Here, the fit is made assuming that the location parameter is 0. The ``fit`` method is a build-in method provided in all rv_continuous distributions. See the [related documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.fit.html#scipy.stats.rv_continuous.fit) for details.
 
 The example below roughly leads to:
 
-    (0.10258798884347263, 0.0, 1.649539304907202, 0.0, 1.0)
+    (0.10258798884347263, 0.0, 1.649539304907202)
     
-It appears that the first parameter is close to ``s`` (0.1) whereas the ``basescale`` (3rd one) corresponds to µ=ln(1.654)=0.5005 (instead of 0.5). Note that the 2 last arguments relate to the location and scale parameters of __the transformed__ distribution. Thus, they are not relevant at all.
+It appears that the first parameter is close to ``s`` (0.1) whereas the ``scale`` (3rd one) corresponds to µ=ln(1.654)=0.5005 (instead of 0.5).
 
 ### Perform a goodness of fit test
 
