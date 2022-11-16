@@ -46,6 +46,7 @@ if __name__ == "__main__":
         axs[i].set_title(dist)
 
         if dist == 'uniform':
+
             theta = trans_dist.fit(sample)
         elif dist == 'positiveNormal':
             theta = trans_dist.fit(sample, floc=0.0, fscale=1)

@@ -75,35 +75,47 @@ class WicksellTransform(stats.rv_continuous):
         """
         self.basedist = basedist
         self.nbins = nbins
-        new_name = 'Wicksell''s transform of {}'.format(basedist.name)
-        if basedist.shapes is None:
-            shapes = 'baseloc, basescale'
-        else:
-            shapes = basedist.shapes + ', baseloc, basescale'
+        new_name = 'Wicksell transform of {}'.format(basedist.name)
         super().__init__(shapes=basedist.shapes, a=max(0.0, basedist.a), b=np.inf, name=new_name, **kwargs)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
         self._parse_args = self._parse_args_modified
+        self._parse_args_rvs = self._parse_args_rvs_modified
         self.Rmax = -1.0
         self.rmin = rmin
 
     def _argcheck(self, *args):
         """
-        Check that all the following conditions are valid:
+        Check that:
         - the argument passed to the base distribution are correct
-        - basescale is positive
         - the support of base distribution is a subset of [0, +inf)
         """
         args, _, _ = self.basedist._parse_args(*args)
         return self.basedist._argcheck(*args) and (self.basedist.support(*args)[0] >= 0.0)
 
     def _parse_args_modified(self, *args, **kwargs):
+        """
+        Fool the argument parser so that loc and scale parameters are considered as related to the base-distribution
+        (not the transformed one).
+        """
         args, loc, scale = self.basedist._parse_args(*args, **kwargs)
         return args + (loc, scale), 0, 1
 
+    def _parse_args_rvs_modified(self, *args, **kwargs):
+        """
+        Fool the argument parser so that loc and scale parameters are considered as related to the base-distribution
+        (not the transformed one).
+        """
+        args, loc, scale, size = self.basedist._parse_args_rvs(*args, **kwargs)
+        args.extend([loc, scale])
+        return args, 0, 1, size
+
     def wicksell(self, x, *args, **kwargs):
-        args, baseloc, basescale = self._parse_args(*args, **kwargs)
-        frozen_dist = self.basedist(*args, loc=baseloc, scale=basescale)
+        """
+        Performs full intregration of the Wicksell equation.
+        """
+        args, _, _ = self._parse_args(*args, **kwargs)
+        frozen_dist = self.basedist(*args)
         E = frozen_dist.mean()
         if 0.0 < x:
             integrand = lambda R: frozen_dist.pdf(R) * (R ** 2 - x ** 2) ** (-0.5)
@@ -216,6 +228,10 @@ class WicksellTransform(stats.rv_continuous):
             di = (statistics[i] - moments[i]) ** 2
             d += 1.0 / (1.0 + i) * di
         return d
+
+    def _unpack_loc_scale(self, theta):
+        loc, scale, args = self.basedist._unpack_loc_scale(theta)
+        return 0, 1, args + (loc, scale)
 
     def _fitstart(self, data, args=None):
         """
