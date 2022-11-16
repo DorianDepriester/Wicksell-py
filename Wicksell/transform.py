@@ -124,6 +124,13 @@ class WicksellTransform(stats.rv_continuous):
         args.extend([loc, scale])
         return args, 0, 1, moments
 
+    def _get_support(self, *args, **kwargs):
+        """
+        The support is actually given by the left truncation (if any, 0 otherwise) and the maximum value given by the
+        base-distribution.
+        """
+        return self.rmin, self.basedist.support(*args, **kwargs)[1]
+
     def wicksell(self, x, *args, **kwargs):
         """
         Performs full intregration of the Wicksell equation.
