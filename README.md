@@ -24,7 +24,7 @@ and create an instance of that class, passing the underlying distribution (that 
 
     wt = WicksellTransform(distro)
     
-In the example above, ``distro`` must be a continuous distribution, as defined in the [scipy's stats](https://docs.scipy.org/doc/scipy/reference/stats.html) module. Finally, use this instance as a usual scipy's distribution. All the parameters related to the underlying distribution are inferred to the transformed one. The ``loc`` and ``scale`` parameters of the underlying distribution are renamed ``baseloc`` and ``basescale``, respectivelly.
+In the example above, ``distro`` must be a continuous distribution, as defined in the [scipy's stats](https://docs.scipy.org/doc/scipy/reference/stats.html) module. Finally, use this instance as a usual scipy's distribution. Then all the parameters given to the ``wt`` function are actually passed-by and applied to the base-distribution (``distro``).
 
 ## Example
 In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html) distribion is considered.
