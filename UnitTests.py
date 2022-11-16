@@ -36,17 +36,7 @@ if __name__ == "__main__":
         tpdf = trans_dist.pdf(x, *param, loc=baseloc, scale=basescale)
         sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=500)
 
-        axs[i].set_ylim(bottom=0.0, top=1.1 * max(pdf))
-        axs[i].plot(x, pdf, 'r', label='PDF')
-        axs[i].plot(x, tpdf, 'b', label='transf. PDF')
-        axs[i].set_xlabel('R')
-        axs[i].set_ylabel('Frequency')
-        axs[i].hist(sample, bins=25, density=True, label='Random samp.')
-        axs[i].legend()
-        axs[i].set_title(dist)
-
         if dist == 'uniform':
-
             theta = trans_dist.fit(sample)
         elif dist == 'positiveNormal':
             theta = trans_dist.fit(sample, floc=0.0, fscale=1)
@@ -57,4 +47,14 @@ if __name__ == "__main__":
         ks = stats.kstest(sample, trans_dist.cdf, theta)
         print('KS test: {}'.format(ks))
         print("---")
+
+        axs[i].set_ylim(bottom=0.0, top=1.1 * max(pdf))
+        axs[i].plot(x, pdf, 'r', label='PDF')
+        axs[i].plot(x, tpdf, 'b', label='transf. PDF')
+        axs[i].plot(x, trans_dist.pdf(x, *theta), 'b', linestyle='dotted', label='Fit')
+        axs[i].hist(sample, bins=25, density=True, label='Rand. samp.')
+        axs[i].set_xlabel('R')
+        axs[i].set_ylabel('Frequency')
+        axs[i].legend()
+        axs[i].set_title(dist)
     plt.show()
