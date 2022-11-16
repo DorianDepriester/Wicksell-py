@@ -64,7 +64,7 @@ class WicksellTransform(stats.rv_continuous):
         rmin : float, optional
             The value at which the transformed distribution is left-truncated (default is 0, i.e. no truncation)
 
-        nbins : integer, optional
+        nbins : int, optional
             The number of bins to use for constant-quantile histogram decomposition of the base-distribution (default is
              1000). See ref. [1] for details.
 
@@ -74,13 +74,18 @@ class WicksellTransform(stats.rv_continuous):
          .. [2] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
         """
         self.basedist = basedist
-        self.nbins = nbins
         new_name = 'Wicksell transform of {}'.format(basedist.name)
         super().__init__(shapes=basedist.shapes, a=max(0.0, basedist.a), b=np.inf, name=new_name, **kwargs)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
+
+        # Overwrites the default argument parsers
         self._parse_args = self._parse_args_modified
         self._parse_args_rvs = self._parse_args_rvs_modified
+        self._parse_args_stats = self._parse_args_stats_modified
+
+        # Integration options
+        self.nbins = nbins
         self.Rmax = -1.0
         self.rmin = rmin
 
@@ -109,6 +114,15 @@ class WicksellTransform(stats.rv_continuous):
         args, loc, scale, size = self.basedist._parse_args_rvs(*args, **kwargs)
         args.extend([loc, scale])
         return args, 0, 1, size
+
+    def _parse_args_stats_modified(self, *args, **kwargs):
+        """
+        Fool the argument parser so that loc and scale parameters are considered as related to the base-distribution
+        (not the transformed one).
+        """
+        args, loc, scale, moments = self.basedist._parse_args_stats(*args, **kwargs)
+        args.extend([loc, scale])
+        return args, 0, 1, moments
 
     def wicksell(self, x, *args, **kwargs):
         """
