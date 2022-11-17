@@ -12,7 +12,7 @@ if __name__ == "__main__":
              "baseloc": 1,
              "basescale": 1.5},
         "positiveNormal":
-            {"distro": posnorm_gen(),
+            {"distro": posnorm_gen(name='Positive Normal'),
              "param": [1, 0.5],
              "baseloc": 0,
              "basescale": 1},
@@ -38,11 +38,11 @@ if __name__ == "__main__":
         sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=1000)
 
         if dist == 'uniform':
-            theta = trans_dist.fit(sample, method='MM')
+            theta = trans_dist.fit(sample)
         elif dist == 'positiveNormal':
-            theta = trans_dist.fit(sample, floc=0.0, fscale=1, method='MM')
+            theta = trans_dist.fit(sample, floc=0.0, fscale=1)
         else:
-            theta = trans_dist.fit(sample, floc=0.0, method='MM')
+            theta = trans_dist.fit(sample, floc=0.0)
         print("Distribution: " + dist)
         print("Fit: {}".format(theta))
         ks = stats.kstest(sample, trans_dist.cdf, theta)
