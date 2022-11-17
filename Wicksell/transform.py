@@ -235,7 +235,7 @@ class WicksellTransform(stats.rv_continuous):
 
     def expect(self, *args, **kwargs):
         """
-        The expectation is estimated from full intragration of the full intragration of Wicksell transform.
+        The expectation is estimated from full integration of the full integration of Wicksell transform.
         """
         integrand = lambda x: self.wicksell(x, *args, **kwargs) * x
         return integrate.quad(integrand, 0, np.inf)[0]
