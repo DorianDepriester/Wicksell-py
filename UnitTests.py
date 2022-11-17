@@ -10,10 +10,10 @@ if __name__ == "__main__":
             {"distro": stats.uniform,
              "param": [],
              "baseloc": 1,
-             "basescale": 1},
+             "basescale": 1.5},
         "positiveNormal":
             {"distro": posnorm_gen(),
-             "param": [0.2, 0.5],
+             "param": [1, 0.5],
              "baseloc": 0,
              "basescale": 1},
         "lognorm":
@@ -25,6 +25,7 @@ if __name__ == "__main__":
 
     x = np.linspace(0, 3.5, 1000)
     fig, axs = plt.subplots(3, 1)
+    fig.tight_layout(h_pad=3)
 
     for i, dist in enumerate(distros):
         basedist = distros[dist]['distro']
@@ -34,7 +35,7 @@ if __name__ == "__main__":
         param = distros[dist]['param']
         pdf = basedist.pdf(x, *param, loc=baseloc, scale=basescale)
         tpdf = trans_dist.pdf(x, *param, loc=baseloc, scale=basescale)
-        sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=500)
+        sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=1000)
 
         if dist == 'uniform':
             theta = trans_dist.fit(sample)
@@ -49,6 +50,7 @@ if __name__ == "__main__":
         print("---")
 
         axs[i].set_ylim(bottom=0.0, top=1.1 * max(pdf))
+        axs[i].set_xlim(left=0.0, right=3.5)
         axs[i].plot(x, pdf, 'r', label='PDF')
         axs[i].plot(x, tpdf, 'b', label='transf. PDF')
         axs[i].plot(x, trans_dist.pdf(x, *theta), 'b', linestyle='dotted', label='Fit')
