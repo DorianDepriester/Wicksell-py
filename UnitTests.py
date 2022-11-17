@@ -6,7 +6,7 @@ from posnorm import posnorm_gen
 
 if __name__ == "__main__":
     """
-    The script will run 3 tests, investigating different base distribution (namely: uniform, Positive normal and 
+    The script will run 3 tests, investigating different base distributions (namely: uniform, positive normal and 
     logNormal). For each distribution, this script will:
         1. compute the transformed Probability Density Function (PDF),
         2. Generate random data from the considered distribution,
@@ -38,6 +38,8 @@ if __name__ == "__main__":
              "basescale": 2}
     }
 
+    n_sample = 1000     # Size of the random data
+
     # Plotting options
     x = np.linspace(0, 3.5, 1000)   # Used for plotting the PDFs
     fig, axs = plt.subplots(len(distros), 1)
@@ -46,6 +48,7 @@ if __name__ == "__main__":
     for i, dist in enumerate(distros):
         print("Distribution: " + dist)
 
+        # Compute PDF and transformed PDF
         basedist = distros[dist]['distro']
         trans_dist = WicksellTransform(basedist)
         baseloc = distros[dist]['baseloc']
@@ -53,18 +56,24 @@ if __name__ == "__main__":
         param = distros[dist]['param']
         pdf = basedist.pdf(x, *param, loc=baseloc, scale=basescale)
         tpdf = trans_dist.pdf(x, *param, loc=baseloc, scale=basescale)
-        sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=1000)
 
+        # Generate random data
+        sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=n_sample)
+
+        # Estimate the distribution parameter from the random data
         if dist == 'uniform':
             theta = trans_dist.fit(sample)
         elif dist == 'positiveNormal':
             theta = trans_dist.fit(sample, floc=0.0, fscale=1)
         else:
             theta = trans_dist.fit(sample, floc=0.0)
+
+        # Print results and perform KS test
         print("Fit: {}".format(theta))
         ks = stats.kstest(sample, trans_dist.cdf, theta)
         print('KS test: {}'.format(ks))
 
+        # Plot all of this
         axs[i].set_ylim(bottom=0.0, top=1.1 * max(pdf))
         axs[i].set_xlim(left=0.0, right=3.5)
         axs[i].plot(x, pdf, 'r', label='PDF')
