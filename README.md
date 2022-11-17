@@ -95,6 +95,9 @@ Using the histogram decomposition instead of computing the improper integral con
 
 ## Cite this work
 If you use this tool in your research, please cite reference [[2]](#2).
+
+## Community guidelines
+Feel free to modify and contribute to this software in any manner, as long as your edit complies with the [MIT licence](LICENCE). If you have troubles or want to report a bug, please use the [issue tracker](https://github.com/DorianDepriester/Wicksell-py/issues).
     
 
 ## References
