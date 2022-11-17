@@ -37,7 +37,7 @@ def cdf_uni(x, rmin, rmax):
         rmax_m[left] + sqrt(rmax_m[left] ** 2 - x_l ** 2))
     cdf[left] = 1 - (gamma + x_l ** 2 * log(rmin_m[left] + sqrt(rmin_m[left] ** 2 - x_l ** 2)) - rmin_m[left] * sqrt(
         rmin_m[left] ** 2 - x_l ** 2)) \
-        / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
+                / (rmax_m[left] ** 2 - rmin_m[left] ** 2)
     center = (rmin_m < x_m) & (x_m <= rmax_m)
     xc = x_m[center]
     gamma = rmax_m[center] * sqrt(rmax_m[center] ** 2 - xc ** 2) - xc ** 2 * log(
@@ -293,10 +293,23 @@ class WicksellTransform(stats.rv_continuous):
             theta_0 = self.basedist._fitstart(data)
         return theta_0
 
-    def fit_moments(self, data, *args):
-        moments = (np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data))
+    def _moment_error(self, theta, x, data_moments):
+        """When the Method of Moments (MM) is used for fit(), _unpack_theta() is incompatible with the way the
+        moment_error is programed.
+        """
+        # The hack: use the default version of _unpack_loc_scale
+        loc, scale, args = super()._unpack_loc_scale(theta)
 
-        def func(theta):
-            return self._moment_distance(moments, *theta)
+        # Everything below is the same as in _distn_infrastructure.py
+        if not self._argcheck(*args) or scale <= 0:
+            return np.inf
 
-        return opti.fmin(func, self._fitstart(data, args=args), args=(np.ravel(data),), disp=False)
+        dist_moments = np.array([self.moment(i + 1, *args, loc=loc, scale=scale)
+                                 for i in range(len(data_moments))])
+        if np.any(np.isnan(dist_moments)):
+            raise ValueError("Method of moments encountered a non-finite "
+                             "distribution moment and cannot continue. "
+                             "Consider trying method='MLE'.")
+
+        return (((data_moments - dist_moments) /
+                 np.maximum(np.abs(data_moments), 1e-8)) ** 2).sum()

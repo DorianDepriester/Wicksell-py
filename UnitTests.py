@@ -38,11 +38,11 @@ if __name__ == "__main__":
         sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=1000)
 
         if dist == 'uniform':
-            theta = trans_dist.fit(sample)
+            theta = trans_dist.fit(sample, method='MM')
         elif dist == 'positiveNormal':
-            theta = trans_dist.fit(sample, floc=0.0, fscale=1)
+            theta = trans_dist.fit(sample, floc=0.0, fscale=1, method='MM')
         else:
-            theta = trans_dist.fit(sample, floc=0.0)
+            theta = trans_dist.fit(sample, floc=0.0, method='MM')
         print("Distribution: " + dist)
         print("Fit: {}".format(theta))
         ks = stats.kstest(sample, trans_dist.cdf, theta)
