@@ -24,18 +24,18 @@ if __name__ == "__main__":
         "uniform":
             {"distro": stats.uniform,
              "param": [],
-             "baseloc": 1,
-             "basescale": 1.5},
+             "loc": 1,
+             "scale": 1.5},
         "positiveNormal":
             {"distro": posnorm_gen(name='Positive Normal'),
              "param": [1, 0.5],
-             "baseloc": 0,
-             "basescale": 1},
+             "loc": 0,
+             "scale": 1},
         "lognorm":
             {"distro": stats.lognorm,
              "param": [0.2],
-             "baseloc": 0,
-             "basescale": 2}
+             "loc": 0,
+             "scale": 2}
     }
 
     n_sample = 1000     # Size of the random data
@@ -51,14 +51,14 @@ if __name__ == "__main__":
         # Compute PDF and transformed PDF
         basedist = distros[dist]['distro']
         trans_dist = WicksellTransform(basedist)
-        baseloc = distros[dist]['baseloc']
-        basescale = distros[dist]['basescale']
+        loc = distros[dist]['loc']
+        scale = distros[dist]['scale']
         param = distros[dist]['param']
-        pdf = basedist.pdf(x, *param, loc=baseloc, scale=basescale)
-        tpdf = trans_dist.pdf(x, *param, loc=baseloc, scale=basescale)
+        pdf = basedist.pdf(x, *param, loc=loc, scale=scale)
+        tpdf = trans_dist.pdf(x, *param, loc=loc, scale=scale)
 
         # Generate random data
-        sample = trans_dist.rvs(*param, loc=baseloc, scale=basescale, size=n_sample)
+        sample = trans_dist.rvs(*param, loc=loc, scale=scale, size=n_sample)
 
         # Estimate the distribution parameter from the random data
         if dist == 'uniform':
