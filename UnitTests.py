@@ -5,6 +5,21 @@ from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 
 if __name__ == "__main__":
+    """
+    The script will run 3 tests, investigating different base distribution (namely: uniform, Positive normal and 
+    logNormal). For each distribution, this script will:
+        1. compute the transformed Probability Density Function (PDF),
+        2. Generate random data from the considered distribution,
+        3. Try to retrieve the distribution parameters by fitting the random data (estimator),
+        4. Perform the Kolmogorov-Smirnov (KS) goodness-of-fit test from the estimator,
+        5. Plot:
+            a. the PDF of the base-distribution,
+            b. the transformed PDF,
+            c. the transformed PDF, computed from the estimator
+            d. the values of the random data as histogram.
+    """
+
+    # List of investigated distributions, and their related parameters
     distros = {
         "uniform":
             {"distro": stats.uniform,
@@ -23,11 +38,14 @@ if __name__ == "__main__":
              "basescale": 2}
     }
 
-    x = np.linspace(0, 3.5, 1000)
-    fig, axs = plt.subplots(3, 1)
+    # Plotting options
+    x = np.linspace(0, 3.5, 1000)   # Used for plotting the PDFs
+    fig, axs = plt.subplots(len(distros), 1)
     fig.tight_layout(h_pad=3)
 
     for i, dist in enumerate(distros):
+        print("Distribution: " + dist)
+
         basedist = distros[dist]['distro']
         trans_dist = WicksellTransform(basedist)
         baseloc = distros[dist]['baseloc']
@@ -43,11 +61,9 @@ if __name__ == "__main__":
             theta = trans_dist.fit(sample, floc=0.0, fscale=1)
         else:
             theta = trans_dist.fit(sample, floc=0.0)
-        print("Distribution: " + dist)
         print("Fit: {}".format(theta))
         ks = stats.kstest(sample, trans_dist.cdf, theta)
         print('KS test: {}'.format(ks))
-        print("---")
 
         axs[i].set_ylim(bottom=0.0, top=1.1 * max(pdf))
         axs[i].set_xlim(left=0.0, right=3.5)
@@ -59,4 +75,7 @@ if __name__ == "__main__":
         axs[i].set_ylabel('Frequency')
         axs[i].legend()
         axs[i].set_title(dist)
+
+        print("---")
+
     plt.show()
