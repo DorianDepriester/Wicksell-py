@@ -121,7 +121,7 @@ class WicksellTransform(stats.rv_continuous):
         (not the transformed one).
         """
         args, loc, scale, moments = self.basedist._parse_args_stats(*args, **kwargs)
-        args.extend([loc, scale])
+        args + (loc, scale)
         return args, 0, 1, moments
 
     def _get_support(self, *args, **kwargs):
