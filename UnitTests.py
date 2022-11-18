@@ -14,9 +14,9 @@ logNormal and Weibull). For each distribution, this script will:
     5. Plot:
         a. the PDF of the base-distribution,
         b. the transformed PDF,
-        c. the transformed PDF, computed from the estimator
+        c. the transformed PDF, computed from the estimator,
         d. the values of the random data as histogram.
-Running this script will take about 10 minutes on a modern computer.
+Using default options, this script will take about 10 minutes to complete on a modern computer.
 """
 
 # List of investigated distributions, and their related parameters
