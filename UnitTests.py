@@ -37,17 +37,43 @@ distros = {
          "param": [0.2],
          "loc": 0,
          "scale": 2,
-         "fit_option": {'floc': 0}}
+         "fit_option": {'floc': 0}},
+    "weibull":
+        {"distro": stats.weibull_min,
+         "param": [1.5],
+         "loc": 0,
+         "scale": 0.5,
+         "fit_option": {'floc': 0}},
 }
 
 
 def run_test(distributions=None, fit=True, kstest=True, nsample=1000):
+    """
+    Run tests on the distributions given above. By default, all the distributions will be considered, and the following
+    test will be performed on each:
+        1. Compute the transformed PDF
+        2. Generate a random sample
+        3. Fit the distribution on the underlying data
+        4. Perform the KS goodness-of-fit test
+        5. Plot the results
+
+    Parameters
+    ----------
+    distributions : list, optional
+        List of the names of the investigated parameters. The can be 'uniform', 'positivenorm' of 'lognorm'.
+    fit : bool, optional
+        Turn on/off the fit step. Default is True
+    kstest : bool, optional
+        Turn on/off the KS goodness-of-fit test. Requires fit=True. Default is True
+    nsample : int, optional
+        Size of the random sample to generate. Default if 1000.
+    """
     if distributions is None:
-        distributions = ['uniform', 'positivenorm', 'lognorm']
+        distributions = distros.keys()
 
     # Plotting options
     x = np.linspace(0, 3.5, 1000)   # Used for plotting the PDFs
-    fig, axs = plt.subplots(len(distributions), 1)
+    fig, axs = plt.subplots(len(distributions), 1, figsize=(8.27, 11.69))
     if len(distributions) == 1:
         axs = [axs]   # If only one subplot is used, it should still be subscriptable.
     fig.tight_layout(h_pad=3)
