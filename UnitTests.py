@@ -5,8 +5,8 @@ from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 
 """
-The script will run 3 tests, investigating different base distributions (namely: uniform, positive normal and 
-logNormal). For each distribution, this script will:
+The script will run 4 tests, investigating different base distributions (namely: uniform, positive normal, 
+logNormal and Weibull). For each distribution, this script will:
     1. compute the transformed Probability Density Function (PDF),
     2. Generate random data from the considered distribution,
     3. Try to retrieve the distribution parameters by fitting the random data (estimator),
@@ -16,6 +16,7 @@ logNormal). For each distribution, this script will:
         b. the transformed PDF,
         c. the transformed PDF, computed from the estimator
         d. the values of the random data as histogram.
+Running this script will take about 10 minutes on a modern computer.
 """
 
 # List of investigated distributions, and their related parameters
@@ -60,12 +61,13 @@ def run_test(distributions=None, fit=True, kstest=True, nsample=1000):
     Parameters
     ----------
     distributions : list, optional
-        List of the names of the investigated parameters. The can be 'uniform', 'positivenorm' of 'lognorm'.
-    fit : bool, optional
+        List of the names of the investigated parameters. They can be 'uniform', 'positivenorm' of 'lognorm' and
+        'weibull'.
+    fit : bool
         Turn on/off the fit step. Default is True
-    kstest : bool, optional
+    kstest : bool
         Turn on/off the KS goodness-of-fit test. Requires fit=True. Default is True
-    nsample : int, optional
+    nsample : int
         Size of the random sample to generate. Default if 1000.
     """
     if distributions is None:
