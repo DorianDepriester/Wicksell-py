@@ -74,8 +74,11 @@ class WicksellTransform(stats.rv_continuous):
          .. [2] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
         """
         self.basedist = basedist
-        new_name = 'Wicksell transform of {}'.format(basedist.name)
-        super().__init__(shapes=basedist.shapes, a=max(0.0, basedist.a), b=np.inf, name=new_name, **kwargs)
+        super().__init__(**kwargs)
+        self.shapes = basedist.shapes
+        self.a = max(0.0, basedist.a)
+        self.b = np.inf
+        self.name = 'Wicksell transform of {}'.format(basedist.name)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
 
@@ -313,3 +316,9 @@ class WicksellTransform(stats.rv_continuous):
 
         return (((data_moments - dist_moments) /
                  np.maximum(np.abs(data_moments), 1e-8)) ** 2).sum()
+
+    def _updated_ctor_param(self):
+        """Add basedist to ctor_param so that one can freeze the transformed distribution."""
+        dct = super()._updated_ctor_param()
+        dct['basedist'] = self.basedist
+        return dct
