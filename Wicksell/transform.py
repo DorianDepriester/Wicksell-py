@@ -18,8 +18,7 @@ def wickselltransform(basedist, nbins=1000, rmin=0.0, **kwargs):
     elif isinstance(basedist, stats._distn_infrastructure.rv_continuous_frozen):
         # If the base-distribution is frozen, instance a transformed one, then freeze it.
         transformed_dist = rv_continuous_transformed(basedist.dist, nbins, rmin, **kwargs)
-        args = basedist.args
-        return transformed_dist.freeze(*args, **kwargs)
+        return transformed_dist.freeze(*basedist.args, **basedist.kwds)
 
 
 def pdf_uni(x, rmin, rmax):
