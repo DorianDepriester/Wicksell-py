@@ -11,6 +11,17 @@ from numpy import sqrt, log
 import scipy.integrate as integrate
 
 
+def wickselltransform(basedist, nbins=1000, rmin=0.0, **kwargs):
+    if isinstance(basedist, stats.rv_continuous):
+        # If the base-distribution is rv_continuous, just return the transformed one.
+        return rv_continuous_transformed(basedist, nbins, rmin, **kwargs)
+    elif isinstance(basedist, stats._distn_infrastructure.rv_continuous_frozen):
+        # If the base-distribution is frozen, instance a transformed one, then freeze it.
+        transformed_dist = rv_continuous_transformed(basedist.dist, nbins, rmin, **kwargs)
+        args = basedist.args
+        return transformed_dist.freeze(*args, **kwargs)
+
+
 def pdf_uni(x, rmin, rmax):
     x_m, rmin_m = np.meshgrid(x, rmin)
     _, rmax_m = np.meshgrid(x, rmax)
@@ -47,7 +58,7 @@ def cdf_uni(x, rmin, rmax):
     return cdf
 
 
-class WicksellTransform(stats.rv_continuous):
+class rv_continuous_transformed(stats.rv_continuous):
     """
     Wicksell transform of a given distribution.
     """
@@ -322,3 +333,11 @@ class WicksellTransform(stats.rv_continuous):
         dct = super()._updated_ctor_param()
         dct['basedist'] = self.basedist
         return dct
+
+    def freeze(self, *args, **kwds):
+        return WicksellTransform_frozen(self, *args, **kwds)
+
+
+class WicksellTransform_frozen(stats._distn_infrastructure.rv_continuous_frozen):
+    """Class for frozen Wicksell transform distribution."""
+    pass
