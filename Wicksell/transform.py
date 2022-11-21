@@ -27,6 +27,11 @@ def wickselltransform(basedist, nbins=1000, rmin=0.0, **kwargs):
         The number of bins to use for constant-quantile histogram decomposition of the base-distribution (default is
          1000). See ref. [1] for details.
 
+    Returns
+    ------
+    rv_continuous_wicksell_transformed or rv_continuous_wicksell_transformed_frozen
+        The transformed distribution. If the base-distribution is frozen, the returned distribution is frozen as well.
+
     References
     ----------
      .. [1] Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
