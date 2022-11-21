@@ -12,6 +12,26 @@ import scipy.integrate as integrate
 
 
 def wickselltransform(basedist, nbins=1000, rmin=0.0, **kwargs):
+    """
+    Creates a new distribution, defined as the Wicksell transform of an underlying continuous distribution [1].
+
+    Parameters
+    ----------
+    basedist : scipy.stats.rv_continuous or scipy.stats._distn_infrastructure.rv_continuous_frozen
+        The distribution to be transformed (base-distribution). This distribution can be frozen.
+
+    rmin : float, optional
+        The value at which the transformed distribution is left-truncated (default is 0, i.e. no truncation)
+
+    nbins : int, optional
+        The number of bins to use for constant-quantile histogram decomposition of the base-distribution (default is
+         1000). See ref. [1] for details.
+
+    References
+    ----------
+     .. [1] Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
+     .. [2] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
+    """
     if isinstance(basedist, stats.rv_continuous):
         # If the base-distribution is rv_continuous, just return the transformed one.
         return rv_continuous_wicksell_transformed(basedist, nbins, rmin, **kwargs)
@@ -61,28 +81,7 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
     """
     Wicksell transform of a given distribution.
     """
-
     def __init__(self, basedist, nbins=1000, rmin=0.0, **kwargs):
-        """
-        Creates a new distribution, defined as the Wicksell transform of an underlying continuous distribution [1].
-
-        Parameters
-        ----------
-        basedist : scipy.stats.rv_continuous
-            The distribution to be transformed (base-distribution)
-
-        rmin : float, optional
-            The value at which the transformed distribution is left-truncated (default is 0, i.e. no truncation)
-
-        nbins : int, optional
-            The number of bins to use for constant-quantile histogram decomposition of the base-distribution (default is
-             1000). See ref. [1] for details.
-
-        References
-        ----------
-         .. [1] Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
-         .. [2] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
-        """
         self.basedist = basedist
         super().__init__(**kwargs)
         self.shapes = basedist.shapes
@@ -333,8 +332,8 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         dct['basedist'] = self.basedist
         return dct
 
-    def freeze(self, *args, **kwds):
-        return rv_continuous_wicksell_transformed_frozen(self, *args, **kwds)
+    def freeze(self, *args, **kwargs):
+        return rv_continuous_wicksell_transformed_frozen(self, *args, **kwargs)
 
 
 class rv_continuous_wicksell_transformed_frozen(stats._distn_infrastructure.rv_continuous_frozen):
