@@ -28,7 +28,7 @@ def wickselltransform(basedist, nbins=1000, rmin=0.0, **kwargs):
          1000). See ref. [1] for details.
 
     Returns
-    ------
+    -------
     rv_continuous_wicksell_transformed or rv_continuous_wicksell_transformed_frozen
         The transformed distribution. If the base-distribution is frozen, the returned distribution is frozen as well.
 
@@ -37,6 +37,7 @@ def wickselltransform(basedist, nbins=1000, rmin=0.0, **kwargs):
      .. [1] Wicksell S. (1925), doi:10.1093/biomet/17.1-2.84
      .. [2] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
     """
+
     if isinstance(basedist, stats.rv_continuous):
         # If the base-distribution is rv_continuous, just return the transformed one.
         return rv_continuous_wicksell_transformed(basedist, nbins, rmin, **kwargs)
@@ -138,7 +139,7 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         (not the transformed one).
         """
         args, loc, scale, moments = self.basedist._parse_args_stats(*args, **kwargs)
-        args + (loc, scale)
+        args += (loc, scale)
         return args, 0, 1, moments
 
     def _get_support(self, *args, **kwargs):
@@ -242,34 +243,6 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         else:
             trunc = self._cdf_untruncated_vec(self.rmin, *args)
             return (self._cdf_untruncated_vec(x, *args) - trunc) / (1 - trunc)
-
-    def _stats(self, *args):
-        """
-        For the sake a efficiency, the stats are computed from RVs.
-        """
-        data = self.rvs(*args, size=10000)
-        return np.mean(data), np.var(data), stats.skew(data), stats.kurtosis(data)
-
-    def expect(self, *args, **kwargs):
-        """
-        The expectation is estimated from full integration of the full integration of Wicksell transform.
-        """
-        integrand = lambda x: self.wicksell(x, *args, **kwargs) * x
-        return integrate.quad(integrand, 0, np.inf)[0]
-
-    def _ppf(self, p, *args, **kwargs):
-        """
-        Quantile function
-        """
-        ppf_0 = self.basedist.ppf(p, *args, **kwargs)
-        return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) - p, ppf_0)
-
-    def _isf(self, p, *args, **kwargs):
-        """
-        Inverse survival function
-        """
-        isf_0 = self.basedist.isf(p, *args, **kwargs)
-        return opti.newton_krylov(lambda x: self.cdf(x, *args, **kwargs) + p - 1, isf_0)
 
     def _rvs(self, *args, size=None, random_state=None):
         """
