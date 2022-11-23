@@ -1,6 +1,6 @@
 import scipy.stats as stats
 import numpy as np
-from Wicksell.transform import wickselltransform
+from Wicksell.transformed_dists import from_continuous
 from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 
@@ -84,7 +84,7 @@ def run_test(distributions=None, fit=True, kstest=True, nsample=1000):
 
         # Compute PDF and transformed PDF
         basedist = distros[dist]['distro']
-        trans_dist = wickselltransform(basedist)
+        trans_dist = from_continuous(basedist)
         loc = distros[dist]['loc']
         scale = distros[dist]['scale']
         param = distros[dist]['param']
@@ -132,6 +132,6 @@ def run_test(distributions=None, fit=True, kstest=True, nsample=1000):
 
 
 if __name__ == "__main__":
-    run_test(nsample=100)
+    run_test()
 
 
