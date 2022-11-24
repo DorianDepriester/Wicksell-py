@@ -17,11 +17,10 @@ def _histogram_error(sample, bin_edges, freq):
     freq = _complete_histogram(bin_edges, freq)
     hist = (freq, bin_edges)
     wh = from_histogram(hist)
-    h=stats.kstest(sample, wh.cdf)[0]
-    return h
+    return stats.kstest(sample, wh.cdf)[0]
 
 
-def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
+def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
 
@@ -37,6 +36,10 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
         be that minimizing the KS test.
+    spacing : str
+        Spacing used for bins. Can be 'Linear' or 'geometric'. Default is 'linear' (i.e. evenly spaced bin edges in
+        linear scale between rmin and rmax). 'geometric' uses an evenly space in log scale, so that the right-most bin
+        is about twice smaller than the left-most one.
 
     Returns
     -------
@@ -54,14 +57,17 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
         hist = ()
         res = ()
         for n in range(bins[0], bins[1]+1):
-            hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n)
+            hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n, spacing=spacing)
             if res_n.fun < ks_min:
                 hist = hist_n
                 res = res_n
                 ks_min = res.fun
         return hist, res
     elif isinstance(bins, int):
-        bin_edges = np.linspace(rmin, rmax, bins + 1)
+        if spacing == 'linear':
+            bin_edges = np.linspace(rmin, rmax, bins + 1)
+        else:
+            bin_edges = (-np.geomspace(2, 1, bins +1 ) + 2) * (rmax - rmin) + rmin
         n_freq = bins - 1
         lb = np.zeros(n_freq)
         ub = np.ones(n_freq)
