@@ -26,7 +26,7 @@ class rv_histogram_wicksell_transformed(stats.rv_continuous):
         self.freq = freq / np.sum(freq * np.diff(hist[1]))
         super().__init__(**kwargs)
         self.rmin = rmin
-        self.a = 0
+        self.a = rmin
         self.b = bin_edges[-1]
 
     def _pdf(self, x, *args):
