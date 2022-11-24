@@ -4,6 +4,7 @@ Created on Tue Jun 23 16:42:21 2020
 
 @author: Dorian
 """
+import numpy as np
 import scipy.stats as stats
 from rv_continuous_transformed import rv_continuous_wicksell_transformed
 from rv_histogram_transformed import rv_histogram_wicksell_transformed
@@ -38,10 +39,10 @@ def from_continuous(basedist, nbins=1000, rmin=0.0, **kwargs):
 
     if isinstance(basedist, stats.rv_continuous):
         # If the base-distribution is rv_continuous, just return the transformed one.
-        return rv_continuous_wicksell_transformed(basedist, nbins, rmin, **kwargs)
+        return rv_continuous_wicksell_transformed(basedist, nbins, rmin=rmin, **kwargs)
     elif isinstance(basedist, stats._distn_infrastructure.rv_continuous_frozen):
         # If the base-distribution is frozen, instance a transformed one, then freeze it.
-        transformed_dist = rv_continuous_wicksell_transformed(basedist.dist, nbins, rmin, **kwargs)
+        transformed_dist = rv_continuous_wicksell_transformed(basedist.dist, nbins=nbins, rmin=rmin, **kwargs)
         return transformed_dist.freeze(*basedist.args, **basedist.kwds)
 
 
@@ -64,8 +65,42 @@ def from_histogram(hist, rmin=0.0):
     rv_histogram_transformed.rv_histogram_transformed
         Continuous distribution, resulting from the Wicksell transform of the histogram.
 
+    See also
+    --------
+    from_continuous : Computes the Wicksell transform of a continuous distribution
+    from_sample : Computes the Wicksell transform from a finite sample of random values
+
     References
     ----------
      .. [1] Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
     """
     return rv_histogram_wicksell_transformed(hist, rmin=rmin)
+
+
+def from_sample(sample, rmin=0.0, **kwargs):
+    """Computes the histogram from a given sample, then apply the Wicksell transform on that histogram.
+
+    Parameters
+    ----------
+    Sample : numpy.ndarray
+        List of random values
+
+    rmin : float
+        The value at which the transformed distribution is left-truncated (default is 0., i.e. no truncation)
+
+    kwargs : dict
+        Extra arguments passed to numpy.histogram()
+
+    Returns
+    -------
+    rv_histogram_transformed.rv_histogram_transformed
+        Continuous distribution related to the Wicksell transform of the binned data, computed from the sample.
+
+    See also
+    --------
+    from_continuous : Computes the Wicksell transform of a continuous distribution.
+    from_histogram : Computes the Wicksell transform of a finite histogram.
+    numpy.histogram : Computes the histogram of a dataset.
+    """
+    hist = np.histogram(sample, **kwargs)
+    return from_histogram(hist, rmin=rmin)

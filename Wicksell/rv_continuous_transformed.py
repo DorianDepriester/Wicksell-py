@@ -12,7 +12,7 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         self.basedist = basedist
         super().__init__(**kwargs)
         self.shapes = basedist.shapes
-        self.a = max(0.0, basedist.a)
+        self.a = max(0.0, rmin)
         self.b = np.inf
         self.name = 'Wicksell transform of {}'.format(basedist.name)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
@@ -229,6 +229,7 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         """Add basedist to ctor_param so that one can freeze the transformed distribution."""
         dct = super()._updated_ctor_param()
         dct['basedist'] = self.basedist
+        dct['rmin'] = self.rmin
         return dct
 
     def freeze(self, *args, **kwargs):
