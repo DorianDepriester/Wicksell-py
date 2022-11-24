@@ -1,6 +1,6 @@
 import scipy.stats as stats
 import numpy as np
-from Wicksell.transformed_dists import from_continuous
+from Wicksell.compute_transform import from_continuous
 from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 
