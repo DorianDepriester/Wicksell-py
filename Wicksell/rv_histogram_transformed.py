@@ -18,12 +18,11 @@ def _fun_from_hist(x, freq, edges, fun):
 
 class rv_histogram_wicksell_transformed(stats.rv_continuous):
     def __init__(self, hist, rmin=0.0, **kwargs):
-        freq = hist[0]
-        bin_edges = hist[1]
+        freq, bin_edges = hist
         if min(bin_edges) < 0:
             raise ValueError('The bin edges must all be positives.')
         self.bin_edges = bin_edges
-        self.freq = freq / np.sum(freq * np.diff(hist[1]))
+        self.freq = freq / np.sum(freq * np.diff(bin_edges))
         super().__init__(**kwargs)
         self.rmin = rmin
         self.a = rmin
@@ -34,7 +33,7 @@ class rv_histogram_wicksell_transformed(stats.rv_continuous):
         if self.rmin == 0.:
             return pdf
         else:
-            trunc = _fun_from_hist(self.rmin, self.freq, self.bin_edges, 'cdf')
+            trunc = _fun_from_hist(self.rmin, self.freq, self.bin_edges, 'pdf')
             return pdf / (1 - trunc)
 
     def _cdf(self, x, *args):
