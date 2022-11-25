@@ -21,7 +21,7 @@ def _histogram_error_reduced(sample, bin_edges, freq):
     return wh.nnlf((0, 1), sample)
 
 
-def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
+def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
 
@@ -36,11 +36,10 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
     bins : int or list or tuple
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
-        be that minimizing the KS test.
-    spacing : str
-        Spacing used for bins. Can be 'Linear' or 'geometric'. Default is 'linear' (i.e. evenly spaced bin edges in
-        linear scale between rmin and rmax). 'geometric' uses an evenly space in log scale, so that the right-most bin
-        is about twice smaller than the left-most one.
+        be that maximizing the likelihood.
+    log_spacing : float
+        If set to 1, all bins will be evenly spaced. If >1, the bins will have a decreasing width so that the left-most
+        bin will be about (log_spacing) times that of the right-most bin.
 
     Returns
     -------
@@ -54,30 +53,38 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
     if rmax is None:
         rmax = max(sample)*4/np.pi
     if isinstance(bins, tuple) or isinstance(bins, list):
-        ks_min = 1.0
+        cost = np.inf
         hist = ()
         res = ()
         for n in range(bins[0], bins[1]+1):
-            hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n, spacing=spacing)
-            if res_n.fun < ks_min:
+            hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n, log_spacing=log_spacing)
+            if res_n.fun < cost:
                 hist, res = hist_n, res_n
-                ks_min = res.fun
+                cost = res_n.fun
         return hist, res
     elif isinstance(bins, int):
-        if spacing == 'linear':
+        if log_spacing == 1.0:
             bin_edges = np.linspace(rmin, rmax, bins + 1)
+        elif log_spacing > 0:
+            # Hack to have a decreasing logarithmic spacing from rmin to rmax
+            geometric = np.geomspace(log_spacing, 1, bins + 1)
+            bin_edges = (-geometric + log_spacing) * (rmax - rmin) / (log_spacing - 1) + rmin
         else:
-            q = 2
-            bin_edges = (-np.geomspace(q, 1, bins + 1) + q) * (rmax - rmin) / (q - 1) + rmin
+            raise ValueError('log_spacing argument must be strictly positive.')
         n_freq = bins - 1
-        lb = np.zeros(n_freq)
-        ub = np.ones(n_freq)
-        bounds = np.vstack((lb, ub)).T
-        x_0 = np.ones(n_freq)/(rmax - rmin)
 
         def fun(x):
             return _histogram_error_reduced(sample, bin_edges, x)
-        cons = LinearConstraint(np.diff(bin_edges[:-1]), 0, 1)  # Ensure that the last frequency is not negative
+        bin_edges_reduced = bin_edges[1:]
+        spacing_reduced = np.diff(bin_edges_reduced)
+        lb = np.zeros(n_freq)
+        ub = 1 / spacing_reduced
+        bounds = np.vstack((lb, ub)).T
+        x_0 = np.zeros(n_freq)              # We start with null frequency everywhere...
+        x_0[-1] = 1 / spacing_reduced[-1]   # ...except for the right-most frequency
+        A1 = spacing_reduced                # Ensure that the left-most frequency is not negative
+        A2 = bin_edges_reduced[1:] > max(sample)
+        cons = LinearConstraint(np.stack((A1, A2)), (0, 0), (1.0, np.inf))
         res = minimize(fun, x_0, bounds=bounds, constraints=cons)
         freq = res.x
         freq = _complete_histogram(bin_edges, freq)
