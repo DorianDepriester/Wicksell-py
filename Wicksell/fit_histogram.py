@@ -1,23 +1,24 @@
 import numpy as np
 from compute_transform import from_histogram
-import scipy.stats as stats
 from scipy.optimize import minimize, LinearConstraint
 
 
 def _complete_histogram(bin_edges, freq):
-    """Retrieve the right-most frequency value, so that the integral over all the bins is 1."""
-    remain = 1 - np.sum(freq * np.diff(bin_edges[:-1]))
-    last_freq = remain / np.diff(bin_edges)[-1]
-    freq = np.append(freq, last_freq)
+    """Retrieve the left-most frequency value, so that the integral over all the bins is 1."""
+    remain = 1 - np.sum(freq * np.diff(bin_edges[1:]))
+    left_freq = remain / np.diff(bin_edges)[0]
+    freq = np.append(left_freq, freq)
     return freq
 
 
-def _histogram_error(sample, bin_edges, freq):
-    """Perform KS test from the transformed distribution, computed from a given histogram, against a given sample."""
+def _histogram_error_reduced(sample, bin_edges, freq):
+    """Perform KS test from the transformed distribution, computed from a given histogram, against a given sample.
+    The left-most frequency is inferred from all the others.
+    """
     freq = _complete_histogram(bin_edges, freq)
     hist = (freq, bin_edges)
     wh = from_histogram(hist)
-    return stats.kstest(sample, wh.cdf)[0]
+    return wh.nnlf((0, 1), sample)
 
 
 def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
@@ -51,7 +52,7 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
 
     """
     if rmax is None:
-        rmax = max(sample)
+        rmax = max(sample)*4/np.pi
     if isinstance(bins, tuple) or isinstance(bins, list):
         ks_min = 1.0
         hist = ()
@@ -59,15 +60,15 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
         for n in range(bins[0], bins[1]+1):
             hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n, spacing=spacing)
             if res_n.fun < ks_min:
-                hist = hist_n
-                res = res_n
+                hist, res = hist_n, res_n
                 ks_min = res.fun
         return hist, res
     elif isinstance(bins, int):
         if spacing == 'linear':
             bin_edges = np.linspace(rmin, rmax, bins + 1)
         else:
-            bin_edges = (-np.geomspace(2, 1, bins +1 ) + 2) * (rmax - rmin) + rmin
+            q = 2
+            bin_edges = (-np.geomspace(q, 1, bins + 1) + q) * (rmax - rmin) / (q - 1) + rmin
         n_freq = bins - 1
         lb = np.zeros(n_freq)
         ub = np.ones(n_freq)
@@ -75,13 +76,44 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, spacing='linear'):
         x_0 = np.ones(n_freq)/(rmax - rmin)
 
         def fun(x):
-            return _histogram_error(sample, bin_edges, x)
+            return _histogram_error_reduced(sample, bin_edges, x)
         cons = LinearConstraint(np.diff(bin_edges[:-1]), 0, 1)  # Ensure that the last frequency is not negative
         res = minimize(fun, x_0, bounds=bounds, constraints=cons)
         freq = res.x
         freq = _complete_histogram(bin_edges, freq)
         hist = (freq, bin_edges)
         return hist, res
+
+
+def plot_histogram(ax, hist, *args, **kwargs):
+    """
+    Simple function to help plotting the resulting histogram.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes._subplots.AxesSubplot
+        Handle to axis or figure where the histogram will go.
+
+    hist : tuple
+        Histogram details, so that hist == (frequencies, bin_edges)
+
+    *args : tuple
+        Extra value arguments passed to the ax.bar() function
+
+    **kwargs : dict
+        Extra keyword arguments passed to the ax.bar() function
+
+    Returns
+    -------
+     l : list
+        A list of lines representing the plotted data.
+
+    Reference
+    ---------
+    Inspired from https://stackoverflow.com/a/33372888/12056867
+    """
+    freq, bin_edges = hist
+    return ax.bar(bin_edges[:-1], freq, width=np.diff(bin_edges), align='edge', *args, **kwargs)
 
 
 
