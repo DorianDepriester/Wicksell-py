@@ -3,19 +3,10 @@ from compute_transform import from_histogram
 from scipy.optimize import minimize, LinearConstraint
 
 
-def _complete_histogram(bin_edges, freq):
-    """Retrieve the left-most frequency value, so that the integral over all the bins is 1."""
-    remain = 1 - np.sum(freq * np.diff(bin_edges[1:]))
-    left_freq = remain / np.diff(bin_edges)[0]
-    freq = np.append(left_freq, freq)
-    return freq
-
-
-def _histogram_error_reduced(sample, bin_edges, freq):
-    """Perform KS test from the transformed distribution, computed from a given histogram, against a given sample.
-    The left-most frequency is inferred from all the others.
+def _histogram_error(sample, bin_edges, freq):
     """
-    freq = _complete_histogram(bin_edges, freq)
+    Computes the negative loglikelihood function from the transformed PDF given by an histogram.
+    """
     hist = (freq, bin_edges)
     wh = from_histogram(hist)
     return wh.nnlf((0, 1), sample)
@@ -71,23 +62,20 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
             bin_edges = (-geometric + log_spacing) * (rmax - rmin) / (log_spacing - 1) + rmin
         else:
             raise ValueError('log_spacing argument must be strictly positive.')
-        n_freq = bins - 1
+        spacing = np.diff(bin_edges)
 
         def fun(x):
-            return _histogram_error_reduced(sample, bin_edges, x)
-        bin_edges_reduced = bin_edges[1:]
-        spacing_reduced = np.diff(bin_edges_reduced)
-        lb = np.zeros(n_freq)
-        ub = 1 / spacing_reduced
+            return _histogram_error(sample, bin_edges, x)
+
+        def confun(x):
+            return np.sum(x*spacing)-1
+        lb = np.zeros(bins)
+        ub = np.ones(bins)*np.inf
         bounds = np.vstack((lb, ub)).T
-        x_0 = np.zeros(n_freq)              # We start with null frequency everywhere...
-        x_0[-1] = 1 / spacing_reduced[-1]   # ...except for the right-most frequency
-        A1 = spacing_reduced                # Ensure that the left-most frequency is not negative
-        A2 = bin_edges_reduced[1:] > max(sample)
-        cons = LinearConstraint(np.stack((A1, A2)), (0, 0), (1.0, np.inf))
-        res = minimize(fun, x_0, bounds=bounds, constraints=cons)
+        x_0 = np.zeros(bins)              # We start with null frequency everywhere...
+        x_0[-1] = 1 / spacing[-1]         # ...except for the right-most bin
+        res = minimize(fun, x_0, bounds=bounds, constraints={'type': 'eq', 'fun': confun})
         freq = res.x
-        freq = _complete_histogram(bin_edges, freq)
         hist = (freq, bin_edges)
         return hist, res
 
