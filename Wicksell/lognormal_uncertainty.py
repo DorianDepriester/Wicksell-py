@@ -21,9 +21,9 @@ def uncertainty(n, sigma, scale=1):
         A dictionary with confidence intervals for the shape parameter (sigma), the expectation (E) and the log-scale
         factor (mu).
 
-    Reference
-    ---------
-    Depriester D. and Kubler R. (2019), doi:10.5566/ias.2133
+    References
+    ----------
+    Depriester D. and Kubler R. (2021), doi:10.1016/j.jsg.2021.104418
 
     """
 
