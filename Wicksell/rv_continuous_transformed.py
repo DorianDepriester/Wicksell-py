@@ -177,7 +177,7 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         r = self.basedist.rvs(*args, size=nbr_spheres, random_state=random_state)
         centers = np.cumsum(2 * r) - r  # centers
         x_pick = stats.uniform.rvs(size=n_req, scale=np.sum(2 * r), random_state=random_state)
-        i = [np.argmin((x_pick_i - centers) ** 2 - r ** 2) for x_pick_i in x_pick]
+        i = np.searchsorted(np.cumsum(2 * r), x_pick)   # Find which spheres were cut
         r2 = r[i] ** 2 - (x_pick - centers[i]) ** 2
         if size is None:
             return np.sqrt(r2[0])
