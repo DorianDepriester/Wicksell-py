@@ -1,6 +1,6 @@
 import numpy as np
 from compute_transform import from_histogram
-from scipy.optimize import minimize, LinearConstraint
+from scipy.optimize import minimize
 
 
 def _histogram_error(sample, bin_edges, freq):
@@ -95,7 +95,7 @@ def plot_histogram(ax, hist, *args, **kwargs):
     *args : tuple
         Extra value arguments passed to the ax.bar() function
 
-    **kwargs : dict
+    **kwargs
         Extra keyword arguments passed to the ax.bar() function
 
     Returns
