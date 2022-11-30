@@ -62,6 +62,47 @@ def Saltykov(sample, bins=10):
     return freq, bin_edges
 
 
+def two_step_method(sample, distribution, bins=10, **kwargs):
+    """Unfold the distribution using the Saltykov method, then fit a continuous distribution on the unfolded histogram.
+    This is an extension of the two-step method, first proposed for lognormal distribution in [1], to any continuous
+    distribution.
+
+    Parameters
+    ----------
+    sample : Iterable
+        Random values of apparent radii
+    distribution : scipy.stats.rv_continuous
+        Continuous distribution from scipy.stats
+    bins : int or Iterable
+        If bins is int, uses the specified number of bins
+        If bins is a series of increasing values, they will be used as bin edges.
+    **kwargs
+        Extra argument. They are the same as for the fit() method for scipy.stats.rv_continuous. For example, if one
+        wants to fix location to 0.0, use 'floc=0'.
+
+    Returns
+    -------
+    list
+        Parameters of the distribution, resulting in the best consistency between the PDF and the unfolded histogram.
+
+    References
+    ----------
+        [1] M. A. Lopez-Sanchez and S. Llana-Fúnez (2016). doi: 10.1016/j.jsg.2016.10.008
+    """
+    freq, bin_edges = Saltykov(sample, bins=bins)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+    # The hack is to take advantage of argument parser from fit() method, but the cost function must be adapted.
+    def nnlf_new(thetal, x):    # nnlf is replaced by the Least-square criterion
+        return np.sum((distribution.pdf(x, *thetal) - freq)**2)
+    nnlf_old = distribution._penalized_nnlf
+    distribution._penalized_nnlf = nnlf_new     # Overwrites the default function used in MLE
+    theta = distribution.fit(bin_centers, **kwargs)
+    distribution._penalized_nnlf = nnlf_old     # Restore default function, just to be sure
+    hist = (freq, bin_edges)
+    return theta, hist
+
+
 def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
