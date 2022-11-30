@@ -48,24 +48,23 @@ distros = {
          "fit_option": {'floc': 0}},
 }
 
-styles = {
-    "basedist": {"color": 'black',                      "label": 'Real (target) distr.'},
-    "two_step": {"color": 'red',                        "label": 'Two-step method'},
-    "fit":      {'color': 'b', 'linestyle': 'dotted',   "label": 'Fit (from distribution)'},
-    "fit_histogram": {"color": 'blue',                  "label": 'Fit (from histogram)'},
-    "Saltykov": {"color": 'red',                        "label": 'Saltykov method'}
-}
+labels = {"dist": 'Real PDF', "two_step": 'Two-step method', "salt": 'Saltykov', "fit": 'Fit (from distr.)',
+         "fit_hist": 'Fit (from hist.)'}
+colors = {"dist": 'k', "two_step": 'b', "salt": 'b', "fit": 'm',  "fit_hist": 'r'}
+styles = {"dist": '-', "two_step": '--', "salt": '-', "fit": ':', "fit_hist": '-.'}
 
 
 def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histogram=True, kstest=True, nsample=1000):
     """
     Run tests on the distributions given above. By default, all the distributions will be considered, and the following
     test will be performed on each:
-        1. Compute the transformed PDF
-        2. Generate a random sample
-        3. Fit the distribution on the underlying data
-        4. Perform the KS goodness-of-fit test
-        5. Plot the results
+        1. compute the transformed PDF,
+        2. generate a random sample,
+        3. apply the two-step method (which includes the Saltykov method),
+        3. fit a continuous distribution,
+        4. Perform the KS goodness-of-fit test from fit
+        5. Unfold the histogram, without considering a given distribution
+    At each step, the results will be illustrated as distribution plots.
 
     Parameters
     ----------
@@ -104,32 +103,23 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
         pdf = basedist.pdf(x, *param, loc=loc, scale=scale)
         tpdf = trans_dist.pdf(x, *param, loc=loc, scale=scale)
 
-        # Generate random data
+        # Generate random data and plot them as histogram
         sample = trans_dist.rvs(*param, loc=loc, scale=scale, size=nsample)
-
-        # Set up the bins here so that they are consistent en each bar plot
         bins = np.linspace(0, 1.3 * max(sample), 21)
+        ax_transformed.hist(sample, ec='yellow', fc='orange', bins=bins, density=True, label='Rand. samp.')
 
         # Plot underlying/unfolded distributions
-        ax_basedist.set_ylim(bottom=0.0, top=1.1 * max(pdf))
-        ax_basedist.set_xlim(left=0.0, right=3.5)
-        style = {'color': 'black'}
-        ax_basedist.plot(x, pdf, label='Underlying PDF', **style)
-        ax_transformed.plot(x, tpdf, label='transf. PDF', **style)
-
-        # Plot transformed distributions and apparent histogram
-        ax_transformed.set_ylim(bottom=0.0, top=1.1 * max(tpdf))
-        ax_transformed.set_xlim(left=0.0, right=3.5)
-        ax_transformed.hist(sample, ec='yellow', fc='orange', bins=bins, density=True, label='Rand. samp.')
+        ax_basedist.plot(x, pdf, label=labels['dist'], color=colors['dist'])
+        ax_transformed.plot(x, tpdf, label=labels['dist'], color=colors['dist'])
 
         if two_step:
             theta, hist_salt = ht.two_step_method(sample, basedist, bins=bins)
-            color = 'red'
-            label = 'Two-step method'
-            ht.plot_histogram(ax_basedist, hist_salt, ec=color, fc=color, alpha=0.2, label='Saltykov method')
-            ax_basedist.plot(x, basedist.pdf(x, *theta), color=color, label=label)
+            ht.plot_histogram(ax_basedist, hist_salt, ec=colors['salt'], fc=colors['salt'], alpha=0.2, label='Saltykov method')
+            ax_basedist.plot(x, basedist.pdf(x, *theta),
+                             color=colors['two_step'], linestyle=styles['two_step'], label=labels['two_step'])
             trans_hist_salt = wt.from_histogram(hist_salt)
-            ax_transformed.plot(x, trans_hist_salt.pdf(x), color=color, label=label, linestyle='dashdot')
+            ax_transformed.plot(x, trans_hist_salt.pdf(x),
+                                color=colors['two_step'], linestyle=styles['two_step'], label=labels['two_step'])
 
         # Estimate the distribution parameter from the sample
         if fit_distribution:
@@ -137,9 +127,10 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
             print("Fit: {}".format(theta))
 
             # Plot fitted curve
-            style = {'label': 'Fit (from distribution)', 'color': 'b', 'linestyle': 'dotted'}
-            ax_transformed.plot(x, trans_dist.pdf(x, *theta), **style)
-            ax_basedist.plot(x, basedist.pdf(x, *theta), **style)
+            ax_transformed.plot(x, trans_dist.pdf(x, *theta),
+                                color=colors['fit'], linestyle=styles['fit'], label=labels['fit'])
+            ax_basedist.plot(x, basedist.pdf(x, *theta),
+                            color=colors['fit'], linestyle=styles['fit'], label=labels['fit'])
 
             # Print results and perform KS test
             if kstest:
@@ -151,18 +142,23 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
             # Unfold the distribution (w/o considering the continuous distribution)
             hist, res = ht.fit_histogram(sample, bins=bins)
             trans_hist = wt.from_histogram(hist)
-            color = 'blue'
-            label = 'Fit (from histogram)'
-            ht.plot_histogram(ax_basedist, hist, ec=color, fc=color, alpha=0.2, label=label)
-            ax_transformed.plot(x, trans_hist.pdf(x), color=color, label=label, linestyle='dashed')
+            ht.plot_histogram(ax_basedist, hist,
+                              ec=colors['fit_hist'], fc=colors['fit_hist'], alpha=0.2, label=labels['fit_hist'])
+            ax_transformed.plot(x, trans_hist.pdf(x),
+                                color=colors['fit_hist'], label=labels['fit_hist'], linestyle=styles['fit_hist'])
 
         # Plot all of this
         fig.suptitle(dist, fontsize=16)
+
+        ax_transformed.set_xlim(left=0.0)
+        ax_transformed.set_ylim(bottom=0.0, top=1.1 * max(tpdf))
         ax_transformed.set_xlabel('r')
         ax_transformed.set_ylabel('Frequency')
         ax_transformed.legend()
         ax_transformed.set_title('Apparent/transformed distribution')
 
+        ax_basedist.set_xlim(left=0.0)
+        ax_basedist.set_ylim(bottom=0.0, top=1.1 * max(pdf))
         ax_basedist.set_xlabel('R')
         ax_basedist.set_ylabel('Frequency')
         ax_basedist.legend()
@@ -175,4 +171,4 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
 
 
 if __name__ == "__main__":
-    run_test(nsample=1000)
+    run_test(distributions=['weibull'])
