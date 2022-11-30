@@ -37,8 +37,8 @@ def _wicksell_uniform(a, b, lb, ub):
 
 def Saltykov(sample, bins=10):
     """
-    Compute the unfolded histogram from a folded sample, using the Saltykov method. This implementation of the Saltykov
-    method uses a modified estimation of probabilities, taking advantage of cdf_uni function.
+    Compute the unfolded histogram from a folded sample, using the Saltykov method [1,2]. This implementation of the
+    Saltykov method uses a modified estimation of probabilities, taking advantage of cdf_uni function.
 
     Parameters
     ----------
@@ -47,6 +47,22 @@ def Saltykov(sample, bins=10):
     bins : int or Iterable
         If bins is int, the Saltykov method will use the specified numer of bins
         If bins is a series of increasing values, they will be used as bin edges.
+
+    Returns
+    -------
+    list
+        Results from the Saltykov method, as (frequencies, bin_edges). Note that frequencies are normalized so that:
+        np.sum(frequencies * np.diff(bin_edges))=1.
+
+    See also
+    --------
+    two_step_method: Apply the Saltykov method and fit a continuous distribution on the unfolded histogram
+
+    References
+    ----------
+        .. [1] S.A. Saltikov (1967), DOI: 10.1007/978-3-642-88260-9_31
+        .. [2] M.A. Lopez-Sanchez, (2018), DOI: 10.21105/joss.00863
+        .. [3] D. Depriester and R. Kubler (2019), DOI: 10.5566/ias.2133
     """
     freq, bin_edges = np.histogram(sample, bins=bins)
     bin_sizes = np.diff(bin_edges)
@@ -82,8 +98,14 @@ def two_step_method(sample, distribution, bins=10, **kwargs):
 
     Returns
     -------
-    list
+    theta : list
         Parameters of the distribution, resulting in the best consistency between the PDF and the unfolded histogram.
+    hist : list
+        Unfolded histogram given by the Saltykov method. It is given by the pair (frequencies, bin_edges).
+
+    See also
+    --------
+    Saltykov: Perform the saltykov method and returns the unfolded histogram
 
     References
     ----------
