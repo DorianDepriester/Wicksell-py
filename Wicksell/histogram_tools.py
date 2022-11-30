@@ -3,6 +3,7 @@ from compute_transform import from_histogram
 from scipy.optimize import minimize
 from wickselluniform import cdf_uni
 from scipy import stats
+from collections.abc import Iterable
 
 
 def _histogram_error(sample, bin_edges, freq):
@@ -35,6 +36,18 @@ def _wicksell_uniform(a, b, lb, ub):
 
 
 def Saltykov(sample, bins=10):
+    """
+    Compute the unfolded histogram from a folded sample, using the Saltykov method. This implementation of the Saltykov
+    method uses a modified estimation of probabilities, taking advantage of cdf_uni function.
+
+    Parameters
+    ----------
+    sample : Iterable
+        Random values of apparent radii
+    bins : int or Iterable
+        If bins is int, the Saltykov method will use the specified numer of bins
+        If bins is a series of increasing values, they will be used as bin edges.
+    """
     freq, bin_edges = np.histogram(sample, bins=bins)
     bin_sizes = np.diff(bin_edges)
     freq = freq / np.sum(freq * bin_sizes)
@@ -49,7 +62,7 @@ def Saltykov(sample, bins=10):
     return freq, bin_edges
 
 
-def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
+def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
 
@@ -61,13 +74,10 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
         Left-most location of bin edges. Default is 0.0.
     rmax : float
         Right-most location of bin edges. Default is max(sample).
-    bins : int or list or tuple
+    bins : Iterable
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
         be that maximizing the likelihood.
-    log_spacing : float
-        If set to 1, all bins will be evenly spaced. If >1, the bins will have a decreasing width so that the left-most
-        bin will be about (log_spacing) times that of the right-most bin.
 
     Returns
     -------
@@ -80,41 +90,42 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
     """
     if rmax is None:
         rmax = max(sample) * 4 / np.pi
-    if isinstance(bins, tuple) or isinstance(bins, list):
-        cost = np.inf
-        hist = ()
-        res = ()
-        for n in range(bins[0], bins[1] + 1):
-            hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n, log_spacing=log_spacing)
-            if res_n.fun < cost:
-                hist, res = hist_n, res_n
-                cost = res_n.fun
-        return hist, res
-    elif isinstance(bins, int):
-        if log_spacing == 1.0:
-            bin_edges = np.linspace(rmin, rmax, bins + 1)
-        elif log_spacing > 0:
-            # Hack to have a decreasing logarithmic spacing from rmin to rmax
-            geometric = np.geomspace(log_spacing, 1, bins + 1)
-            bin_edges = (-geometric + log_spacing) * (rmax - rmin) / (log_spacing - 1) + rmin
+    if isinstance(bins, int):
+        # e.g. bins=10
+        bin_edges = np.linspace(rmin, rmax, bins + 1)
+        return fit_histogram(sample, bins=bin_edges)
+    elif isinstance(bins, Iterable):
+        if len(bins) == 2 and isinstance(bins[0], int) and isinstance(bins[1], int):
+            # e.g. bins=(10,20)
+            cost = np.inf
+            hist = ()
+            res = ()
+            for n in range(bins[0], bins[1] + 1):
+                bin_edges = np.linspace(rmin, rmax, bins=n+1)
+                hist_n, res_n = fit_histogram(sample, bins=bin_edges)
+                if res_n.fun < cost:
+                    hist, res = hist_n, res_n
+                    cost = res_n.fun
+            return hist, res
         else:
-            raise ValueError('log_spacing argument must be strictly positive.')
-        spacing = np.diff(bin_edges)
+            # e.g. bins=(0., 1., 2., 3.)
+            spacing = np.diff(bins)
+            n_bins = len(bins) - 1
 
-        def fun(x):
-            return _histogram_error(sample, bin_edges, x)
+            def fun(x):
+                return _histogram_error(sample, bins, x)
 
-        def confun(x):
-            return np.sum(x * spacing) - 1
+            def confun(x):
+                return np.sum(x * spacing) - 1
 
-        lb = np.zeros(bins)
-        ub = np.ones(bins) * np.inf
-        bounds = np.vstack((lb, ub)).T
-        x_0, _ = Saltykov(sample, bins=bin_edges)
-        res = minimize(fun, x_0, bounds=bounds, constraints={'type': 'eq', 'fun': confun})
-        freq = res.x
-        hist = (freq, bin_edges)
-        return hist, res
+            lb = np.zeros(n_bins)
+            ub = np.ones(n_bins) * np.inf
+            bounds = np.vstack((lb, ub)).T
+            x_0, _ = Saltykov(sample, bins=bins)
+            res = minimize(fun, x_0, bounds=bounds, constraints={'type': 'eq', 'fun': confun})
+            freq = res.x
+            hist = (freq, bins)
+            return hist, res
 
 
 def plot_histogram(ax, hist, *args, **kwargs):
