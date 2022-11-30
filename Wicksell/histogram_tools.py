@@ -12,6 +12,41 @@ def _histogram_error(sample, bin_edges, freq):
     return wh.nnlf((0, 1), sample)
 
 
+def _wicksell(r, lb, ub):
+    """
+    When a sphere of radius r is cut at random latitude, the probability of finding a disk with radius comprised
+    between lb and ub is:
+
+    .. math::
+        \frac{1r}\left( \sqrt{r^2-lb^2} - \sqrt{r^2-ub^2} \right)
+
+    References
+    ----------
+    Sahagian, D. and Proussevitch, A. (1998). doi: 10.1016/S0377-0273(98)00043-2
+
+    """
+    return (np.sqrt(r ** 2 - lb ** 2) - np.sqrt(r ** 2 - ub ** 2)) / r
+
+
+def _wicksell_uniform(a, b, lb, ub):
+    return cdf_uni(b, lb, ub) - cdf_uni(a, lb, ub)
+
+
+def Saltykov(hist):
+    freq, bin_edges = hist
+    bin_sizes = np.diff(bin_edges)
+    freq = freq / np.sum(freq * bin_sizes)
+    n_bins = len(freq)
+    for i in reversed(range(0, n_bins)):
+        p_i = _wicksell(bin_edges[i + 1], bin_edges[i], bin_edges[i + 1])
+        for j in range(0, i):
+            p_j = _wicksell_uniform(bin_edges[j], bin_edges[j + 1], bin_edges[i], bin_edges[i + 1])
+            p_norm = p_j * freq[i] / p_i
+            freq[j] = np.abs(freq[j] - p_norm)
+    freq = freq / np.sum(freq * bin_sizes)
+    return freq, bin_edges
+
+
 def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
@@ -42,12 +77,12 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
 
     """
     if rmax is None:
-        rmax = max(sample)*4/np.pi
+        rmax = max(sample) * 4 / np.pi
     if isinstance(bins, tuple) or isinstance(bins, list):
         cost = np.inf
         hist = ()
         res = ()
-        for n in range(bins[0], bins[1]+1):
+        for n in range(bins[0], bins[1] + 1):
             hist_n, res_n = fit_histogram(sample, rmin, rmax, bins=n, log_spacing=log_spacing)
             if res_n.fun < cost:
                 hist, res = hist_n, res_n
@@ -68,12 +103,13 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
             return _histogram_error(sample, bin_edges, x)
 
         def confun(x):
-            return np.sum(x*spacing)-1
+            return np.sum(x * spacing) - 1
+
         lb = np.zeros(bins)
-        ub = np.ones(bins)*np.inf
+        ub = np.ones(bins) * np.inf
         bounds = np.vstack((lb, ub)).T
-        x_0 = np.zeros(bins)              # We start with null frequency everywhere...
-        x_0[-1] = 1 / spacing[-1]         # ...except for the right-most bin
+        x_0 = np.zeros(bins)  # We start with null frequency everywhere...
+        x_0[-1] = 1 / spacing[-1]  # ...except for the right-most bin
         res = minimize(fun, x_0, bounds=bounds, constraints={'type': 'eq', 'fun': confun})
         freq = res.x
         hist = (freq, bin_edges)
@@ -109,7 +145,3 @@ def plot_histogram(ax, hist, *args, **kwargs):
     """
     freq, bin_edges = hist
     return ax.bar(bin_edges[:-1], freq, width=np.diff(bin_edges), align='edge', *args, **kwargs)
-
-
-
-
