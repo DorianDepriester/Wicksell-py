@@ -1,6 +1,8 @@
 import numpy as np
 from compute_transform import from_histogram
 from scipy.optimize import minimize
+from wickselluniform import cdf_uni
+from scipy import stats
 
 
 def _histogram_error(sample, bin_edges, freq):
@@ -9,7 +11,7 @@ def _histogram_error(sample, bin_edges, freq):
     """
     hist = (freq, bin_edges)
     wh = from_histogram(hist)
-    return wh.nnlf((0, 1), sample)
+    return stats.kstest(sample, wh.cdf)[0]
 
 
 def _wicksell(r, lb, ub):
@@ -32,8 +34,8 @@ def _wicksell_uniform(a, b, lb, ub):
     return cdf_uni(b, lb, ub) - cdf_uni(a, lb, ub)
 
 
-def Saltykov(hist):
-    freq, bin_edges = hist
+def Saltykov(sample, bins=10):
+    freq, bin_edges = np.histogram(sample, bins=bins)
     bin_sizes = np.diff(bin_edges)
     freq = freq / np.sum(freq * bin_sizes)
     n_bins = len(freq)
@@ -108,8 +110,7 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, log_spacing=1.0):
         lb = np.zeros(bins)
         ub = np.ones(bins) * np.inf
         bounds = np.vstack((lb, ub)).T
-        x_0 = np.zeros(bins)  # We start with null frequency everywhere...
-        x_0[-1] = 1 / spacing[-1]  # ...except for the right-most bin
+        x_0, _ = Saltykov(sample, bins=bin_edges)
         res = minimize(fun, x_0, bounds=bounds, constraints={'type': 'eq', 'fun': confun})
         freq = res.x
         hist = (freq, bin_edges)
