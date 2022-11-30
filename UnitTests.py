@@ -81,9 +81,6 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
     if distributions is None:
         distributions = distros.keys()
 
-    # Plotting options
-    x = np.linspace(0, 3.5, 1000)  # Used for plotting the PDFs
-
     for i, dist in enumerate(distributions):
         fig, (ax_basedist, ax_transformed) = plt.subplots(2, 1, constrained_layout=True)
 
@@ -100,15 +97,15 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
             formatted_params = "loc={}, scale={}".format(loc, scale)
         print("Distribution: {}({})".format(dist, formatted_params))
 
-        pdf = basedist.pdf(x, *param, loc=loc, scale=scale)
-        tpdf = trans_dist.pdf(x, *param, loc=loc, scale=scale)
-
         # Generate random data and plot them as histogram
         sample = trans_dist.rvs(*param, loc=loc, scale=scale, size=nsample)
         bins = np.linspace(0, 1.3 * max(sample), 21)
         ax_transformed.hist(sample, ec='yellow', fc='orange', bins=bins, density=True, label='Rand. samp.')
 
         # Plot underlying/unfolded distributions
+        x = np.linspace(0, max(sample), 1000)  # Used for plotting the PDFs
+        pdf = basedist.pdf(x, *param, loc=loc, scale=scale)
+        tpdf = trans_dist.pdf(x, *param, loc=loc, scale=scale)
         ax_basedist.plot(x, pdf, label=labels['dist'], color=colors['dist'])
         ax_transformed.plot(x, tpdf, label=labels['dist'], color=colors['dist'])
 
@@ -140,7 +137,7 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
         # Unfold the histogram
         if fit_histogram:
             # Unfold the distribution (w/o considering the continuous distribution)
-            hist, res = ht.fit_histogram(sample, bins=bins)
+            hist, res = ht.fit_histogram(sample, bins=bins, method='MLE')
             trans_hist = wt.from_histogram(hist)
             ht.plot_histogram(ax_basedist, hist,
                               ec=colors['fit_hist'], fc=colors['fit_hist'], alpha=0.2, label=labels['fit_hist'])

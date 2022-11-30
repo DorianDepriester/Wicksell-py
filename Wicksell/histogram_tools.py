@@ -6,13 +6,16 @@ from scipy import stats
 from collections.abc import Iterable
 
 
-def _histogram_error(sample, bin_edges, freq):
+def _histogram_error(sample, bin_edges, freq, method='MLE'):
     """
     Computes the negative loglikelihood function from the transformed PDF given by an histogram.
     """
     hist = (freq, bin_edges)
     wh = from_histogram(hist)
-    return stats.kstest(sample, wh.cdf)[0]
+    if method.lower() == 'mde':
+        return stats.kstest(sample, wh.cdf)[0]
+    else:
+        return wh.nnlf((0, 1), sample)
 
 
 def _wicksell(r, lb, ub):
@@ -105,7 +108,7 @@ def two_step_method(sample, distribution, bins=10, **kwargs):
 
     See also
     --------
-    Saltykov: Perform the saltykov method and returns the unfolded histogram
+    Saltykov: Perform the saltykov method and return the unfolded histogram
 
     References
     ----------
@@ -125,7 +128,7 @@ def two_step_method(sample, distribution, bins=10, **kwargs):
     return theta, hist
 
 
-def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
+def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MLE'):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
 
@@ -141,6 +144,9 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
         be that maximizing the likelihood.
+    method : str
+        Use either Maximum Likelihood Estimation (MLE) as a fitting criterion, of Minimum Distance Estimation (MDE),
+        through the Kolmogorov-Smirnov (KS) goodness-of-fit test. Default is MLE.
 
     Returns
     -------
@@ -176,7 +182,7 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10):
             n_bins = len(bins) - 1
 
             def fun(x):
-                return _histogram_error(sample, bins, x)
+                return _histogram_error(sample, bins, x, method=method)
 
             def confun(x):
                 return np.sum(x * spacing) - 1
@@ -199,13 +205,10 @@ def plot_histogram(ax, hist, *args, **kwargs):
     ----------
     ax : matplotlib.axes._subplots.AxesSubplot
         Handle to axis or figure where the histogram will go.
-
     hist : tuple
         Histogram details, so that hist == (frequencies, bin_edges)
-
     *args : tuple
         Extra value arguments passed to the ax.bar() function
-
     **kwargs
         Extra keyword arguments passed to the ax.bar() function
 
@@ -214,8 +217,8 @@ def plot_histogram(ax, hist, *args, **kwargs):
      l : list
         A list of lines representing the plotted data.
 
-    Reference
-    ---------
+    References
+    ----------
     Inspired from https://stackoverflow.com/a/33372888/12056867
     """
     freq, bin_edges = hist
