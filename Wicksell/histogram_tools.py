@@ -147,7 +147,7 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MDE'):
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
         be that maximizing the likelihood. If bins is a list of increasing float values, they will be used as bin edges;
-        in this case, rmin and rmax are not used.
+        in this case, rmin and rmax are omitted.
     method : str
         Use either Maximum Likelihood Estimation (MLE) as a fitting criterion, of Minimum Distance Estimation (MDE),
         through the Kolmogorov-Smirnov (KS) goodness-of-fit test. Default is MDE.
