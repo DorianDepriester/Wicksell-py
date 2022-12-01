@@ -142,7 +142,7 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MDE'):
     rmin : float
         Left-most location of bin edges. Default is 0.0.
     rmax : float
-        Right-most location of bin edges. Default is max(sample).
+        Right-most location of bin edges. Default is max(sample)*4/pi.
     bins : int or Iterable
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
