@@ -6,16 +6,19 @@ from scipy import stats
 from collections.abc import Iterable
 
 
-def _histogram_error(sample, bin_edges, freq, method='MLE'):
+def _histogram_error(sample, bin_edges, freq, method):
     """
-    Computes the negative loglikelihood function from the transformed PDF given by an histogram.
+    Computes the error function between a tranformed histogram and a finite sample. This error can be KS test or
+    negative log-likelihood.
     """
     hist = (freq, bin_edges)
     wh = from_histogram(hist)
     if method.lower() == 'mde':
         return stats.kstest(sample, wh.cdf)[0]
-    else:
+    elif method.lower() == 'mle':
         return wh.nnlf((0, 1), sample)
+    else:
+        raise ValueError('Method can be either \'MDE\' or \'MLE\'.')
 
 
 def _wicksell(r, lb, ub):
@@ -41,7 +44,7 @@ def _wicksell_uniform(a, b, lb, ub):
 def Saltykov(sample, bins=10):
     """
     Compute the unfolded histogram from a folded sample, using the Saltykov method [1,2]. This implementation of the
-    Saltykov method uses a modified estimation of probabilities, taking advantage of cdf_uni function.
+    Saltykov method uses a modified estimation of probabilities, taking advantage of cdf_uni function [3].
 
     Parameters
     ----------
@@ -128,7 +131,7 @@ def two_step_method(sample, distribution, bins=10, **kwargs):
     return theta, hist
 
 
-def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MLE'):
+def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MDE'):
     """
     Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
 
@@ -140,21 +143,22 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MLE'):
         Left-most location of bin edges. Default is 0.0.
     rmax : float
         Right-most location of bin edges. Default is max(sample).
-    bins : Iterable
+    bins : int or Iterable
         Number of bins to use. If int, the function will be run with only this number of bins. If bins is a list, like
         (n_min, n_max), this function will run for each value ranging between n_min and n_max. The returned value will
-        be that maximizing the likelihood.
+        be that maximizing the likelihood. If bins is a list of increasing float values, they will be used as bin edges;
+        in this case, rmin and rmax are not used.
     method : str
         Use either Maximum Likelihood Estimation (MLE) as a fitting criterion, of Minimum Distance Estimation (MDE),
-        through the Kolmogorov-Smirnov (KS) goodness-of-fit test. Default is MLE.
+        through the Kolmogorov-Smirnov (KS) goodness-of-fit test. Default is MDE.
 
     Returns
     -------
     hist : tuple
        The unfolded histogram which minimizes the KS test.
-
     res : scipy.optimize._optimize.OptimizeResult
-        Information about minimizing procedure. In particular, the KS test value is provided by res.fun.
+        Information about minimizing procedure. In particular, the final error value (KS statistics of negative log-
+        likelihood, depending on the method) is provided by res.fun.
 
     """
     if rmax is None:
@@ -182,7 +186,7 @@ def fit_histogram(sample, rmin=0.0, rmax=None, bins=10, method='MLE'):
             n_bins = len(bins) - 1
 
             def fun(x):
-                return _histogram_error(sample, bins, x, method=method)
+                return _histogram_error(sample, bins, x, method)
 
             def confun(x):
                 return np.sum(x * spacing) - 1
