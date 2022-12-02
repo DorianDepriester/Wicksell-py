@@ -105,7 +105,7 @@ def polyhedron_bias(sigma, **kwargs):
         mess = 'The bias function was initially set up for sigma in [{:.3f},{:.3f}].'.format(sigma_min, sigma_max)
         warnings.warn(mess)
 
-    # Solve  0 = p[0]*sigma^2 + p[1]*sigma + (p[1] - sigma)
+    # Solve  0 = p[0]*sigma^2 + p[1]*sigma + (p[2] - sigma)
     p_roots = p_sigma
     p_roots[-1] += -sigma
     roots = np.roots(p_roots)
