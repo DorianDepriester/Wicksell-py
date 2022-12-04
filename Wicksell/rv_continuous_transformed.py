@@ -35,7 +35,11 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         - the support of base distribution is a subset of [0, +inf)
         """
         args, _, _ = self.basedist._parse_args(*args)
-        return self.basedist._argcheck(*args) and (self.basedist.support(*args)[0] >= 0.0)
+        if self.basedist.support(*args)[0] >= 0.0:
+            mess = 'The support of the base distribution must be positive. If you have defined the distribution by '
+            'your own, remember to define the _get_support() method.'
+            raise ValueError(mess)
+        return self.basedist._argcheck(*args)
 
     def _parse_args_modified(self, *args, **kwargs):
         """
