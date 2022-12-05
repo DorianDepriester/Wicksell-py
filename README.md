@@ -18,11 +18,11 @@ The aim of this project is to provide a robust and convinient way to compute the
 ## Basic use
 In your Python script, import the class constructor for ``WicksellTransform``:
 
-    from Wicksell.transform import WicksellTransform
+    from Wicksell import wicksell_transform as wt
     
 and create an instance of that class, passing the underlying distribution (that used for computing the Wicksell transform).
 
-    wt = WicksellTransform(distro)
+    transformed_dist = wt.from_continuous(distro)
     
 In the example above, ``distro`` must be a continuous distribution, as defined in the [scipy's stats](https://docs.scipy.org/doc/scipy/reference/stats.html) module. Finally, use this instance as a usual scipy's distribution. Then all the parameters given to the ``wt`` function are actually passed-by and applied to the base-distribution (``distro``).
 
@@ -31,9 +31,9 @@ In the following, the [lognormal](https://docs.scipy.org/doc/scipy/reference/gen
 
     import scipy.stats as stats
     import numpy as np
-    from  Wicksell.transform import WicksellTransform
+    from Wicksell import wicksell_transform as wt
     
-    wlognorm = WicksellTransform(stats.lognorm)
+    wlognorm = wt.from_continuous(stats.lognorm)
     s = 0.1                 # Shape parameter for lognormal
     mu = 0.5
     scale = np.exp(mu)  # loc parameter of underlying distribution
