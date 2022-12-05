@@ -1,5 +1,5 @@
 import numpy as np
-from compute_transform import from_histogram
+from wicksell_transform import from_histogram
 from scipy.optimize import minimize
 from wickselluniform import cdf_uni
 from scipy import stats

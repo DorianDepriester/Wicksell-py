@@ -1,6 +1,6 @@
 import scipy.stats as stats
 import numpy as np
-from Wicksell import compute_transform as wt
+from Wicksell import wicksell_transform as wt
 from matplotlib import pyplot as plt
 from posnorm import posnorm_gen
 import histogram_tools as ht

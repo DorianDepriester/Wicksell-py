@@ -1,4 +1,4 @@
-import Wicksell.compute_transform as wt
+import Wicksell.wicksell_transform as wt
 import numpy as np
 import matplotlib.pyplot as plt
 from Wicksell.histogram_tools import fit_histogram, plot_histogram, Saltykov, two_step_method
