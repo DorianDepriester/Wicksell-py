@@ -85,9 +85,8 @@ def Saltykov(sample, bins=10):
 
 
 def two_step_method(sample, distribution, bins=10, **kwargs):
-    """Unfold the distribution using the Saltykov method, then fit a continuous distribution on the unfolded histogram.
-    This is an extension of the two-step method, first proposed for lognormal distribution in [1], to any continuous
-    distribution.
+    """Unfold the distribution by first fitting an histogram, then fit a continuous distribution on it. This is an
+    extension of the two-step method, first proposed for lognormal distribution in [1], to any continuous distribution.
 
     Parameters
     ----------
@@ -107,17 +106,18 @@ def two_step_method(sample, distribution, bins=10, **kwargs):
     theta : list
         Parameters of the distribution, resulting in the best consistency between the PDF and the unfolded histogram.
     hist : list
-        Unfolded histogram given by the Saltykov method. It is given by the pair (frequencies, bin_edges).
+        Unfolded histogram. It is given by the pair (frequencies, bin_edges).
 
     See also
     --------
+    fit_histogram: Unfold a sample to find the underlying histogram resulting in the best goodness-of-fit KS test.
     Saltykov: Perform the saltykov method and return the unfolded histogram
 
     References
     ----------
         [1] M. A. Lopez-Sanchez and S. Llana-Fúnez (2016). doi: 10.1016/j.jsg.2016.10.008
     """
-    freq, bin_edges = Saltykov(sample, bins=bins)
+    (freq, bin_edges), _ = fit_histogram(sample, bins=bins)
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
     # The hack is to take advantage of argument parser from fit() method, but the cost function must be adapted.
