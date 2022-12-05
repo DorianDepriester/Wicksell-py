@@ -3,8 +3,7 @@ import numpy as np
 
 class bimodalposnorm_gen(stats.rv_continuous):
     """Mixture of two positive normal distributions"""
-    def _pdf(self, x, *args):
-        mu1, s1, mu2, s2, f1 = args
+    def _pdf(self, x, mu1, s1, mu2, s2, f1):
         a1 = -mu1 / s1
         pdf1 = stats.truncnorm.pdf(x, a1, np.inf, scale=s1, loc=mu1)
         a2 = -mu2 / s2
@@ -14,8 +13,7 @@ class bimodalposnorm_gen(stats.rv_continuous):
     def _get_support(self, *args, **kwargs):
         return 0., np.inf
 
-    def _rvs(self, *args, size=None, random_state=None):
-        mu1, s1, mu2, s2, f1 = args
+    def _rvs(self, mu1, s1, mu2, s2, f1, size=None, random_state=None):
         if size is None:
             n_req = 1
         else:
