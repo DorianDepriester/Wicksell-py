@@ -121,12 +121,12 @@ def two_step_method(sample, distribution, bins=10, **kwargs):
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
     # The hack is to take advantage of argument parser from fit() method, but the cost function must be adapted.
-    def nnlf_new(thetal, x):    # nnlf is replaced by the Least-square criterion
-        return np.sum((distribution.pdf(x, *thetal) - freq)**2)
-    nnlf_old = distribution._penalized_nnlf
-    distribution._penalized_nnlf = nnlf_new     # Overwrites the default function used in MLE
-    theta = distribution.fit(bin_centers, **kwargs)
-    distribution._penalized_nnlf = nnlf_old     # Restore default function, just to be sure
+    def error_fun(args, x, _):    # moment_error, used in Method of Moments (MM), replaced by Least-square criterion
+        return np.sum((distribution.pdf(x, *args) - freq) ** 2)
+    moment_error_old = distribution._moment_error
+    distribution._moment_error = error_fun     # Overwrites the default function used in MM
+    theta = distribution.fit(bin_centers, **kwargs, method='MM')
+    distribution._moment_error = moment_error_old     # Restore default function, just to be sure
     hist = (freq, bin_edges)
     return theta, hist
 
