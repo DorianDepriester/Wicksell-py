@@ -4,13 +4,11 @@ import numpy as np
 
 class posnorm_gen(stats.rv_continuous):
     """Positive normal distribution"""
-    def _pdf(self, x, *args):
-        mu, s = args
+    def _pdf(self, x, mu, s):
         a = -mu / s
         return stats.truncnorm.pdf(x, a, np.inf, scale=s, loc=mu)
 
-    def _cdf(self, x, *args):
-        mu, s = args
+    def _cdf(self, x, mu, s):
         a = -mu / s
         return stats.truncnorm.cdf(x, a, np.inf, scale=s, loc=mu)
 
@@ -28,8 +26,7 @@ class posnorm_gen(stats.rv_continuous):
     def _argcheck(self, *args):
         return args[1] > 0
 
-    def _ppf(self, q, *args):
-        mu, s = args
+    def _ppf(self, q, mu, s):
         a = -mu / s
         A = (1 - stats.norm.cdf(a)) * q + stats.norm.cdf(a)
         return s * stats.norm.ppf(A) + mu
