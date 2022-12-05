@@ -61,7 +61,6 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
         3. apply the two-step method (which includes the Saltykov method),
         3. fit a continuous distribution,
         4. Perform the KS goodness-of-fit test from fit
-        5. Unfold the histogram, without considering a given distribution
     At each step, the results will be illustrated as distribution plots.
 
     Parameters
@@ -73,8 +72,6 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
         Turn on/off the attempt to retrieve the distribution using the two-step method. Default is True.
     fit_distribution : bool
         Turn on/off the fit step. Default is True
-    fit_histogram : bool
-        Turn on/off the attempt unfold the distribution by fitting method. Default it True.
     kstest : bool
         Turn on/off the KS goodness-of-fit test. Requires fit=True. Default is True
     nsample : int
@@ -139,16 +136,6 @@ def run_test(distributions=None, two_step=True, fit_distribution=True, fit_histo
             if kstest:
                 ks = stats.kstest(sample, trans_dist.cdf, theta)
                 print('KS test: {}'.format(ks))
-
-        # Unfold the histogram
-        if fit_histogram:
-            # Unfold the distribution (w/o considering the continuous distribution)
-            hist, res = ht.fit_histogram(sample, bins=bins)
-            trans_hist = wt.from_histogram(hist)
-            ht.plot_histogram(ax_basedist, hist,
-                              ec=colors['fit_hist'], fc=colors['fit_hist'], alpha=0.3, label=labels['fit_hist'])
-            ax_transformed.plot(x, trans_hist.pdf(x),
-                                color=colors['fit_hist'], label=labels['fit_hist'], linestyle=styles['fit_hist'])
 
         # General plotting options
         fig.suptitle(dist, fontsize=16)
