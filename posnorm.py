@@ -18,10 +18,9 @@ class posnorm_gen(stats.rv_continuous):
     def _get_support(self, *args, **kwargs):
         return 0.0, np.inf
 
-    def _rvs(self, *args, size=None, random_state=None):
-        s, mu = args
+    def _rvs(self, mu, s, size=None, random_state=None):
         a = -mu / s
-        return stats.truncnorm.rvs(a, np.inf, scale=s, loc=mu, size=size)
+        return stats.truncnorm.rvs(a, np.inf, scale=s, loc=mu, size=size, random_state=random_state)
 
     def _argcheck(self, *args):
         return args[1] > 0
