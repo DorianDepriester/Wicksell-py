@@ -18,7 +18,7 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         self.name = 'Wicksell transform of {}'.format(basedist.name)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
-        self._fitstart = super()._fitstart
+        self.numargs = basedist.numargs
 
 
         # Overwrites the default argument parsers
@@ -200,13 +200,9 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         return 0, 1, args + (loc, scale)
 
     def fit(self, data, *args, **kwargs):
-
-        def _fitstart_extended(data, args=None):
-            theta_0, _ = ht.two_step_method(data, self.basedist, bins=10, **kwargs)
-            return theta_0
-        self._fitstart = _fitstart_extended
-        return super().fit(data, *args, **kwargs)
-
+        theta_0, _ = ht.two_step_method(data, self.basedist, bins=10, **kwargs)
+        *args, loc, scale = theta_0
+        return super().fit(data, *args, loc=loc, scale=scale, **kwargs)
 
     def _moment_error(self, theta, x, data_moments):
         """When the Method of Moments (MM) is used for fit(), _unpack_theta() is incompatible with the way the
