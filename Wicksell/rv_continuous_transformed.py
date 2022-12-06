@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import stats as stats, integrate as integrate
+import histogram_tools as ht
 
 from wickselluniform import pdf_uni, cdf_uni
 
@@ -17,6 +18,8 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         self.name = 'Wicksell transform of {}'.format(basedist.name)
         self._pdf_untruncated_vec = np.vectorize(self._pdf_untruncated_single, otypes='d')
         self._cdf_untruncated_vec = np.vectorize(self._cdf_untruncated_single, otypes='d')
+        self._fitstart = super()._fitstart
+
 
         # Overwrites the default argument parsers
         self._parse_args = self._parse_args_modified
@@ -196,17 +199,14 @@ class rv_continuous_wicksell_transformed(stats.rv_continuous):
         loc, scale, args = self.basedist._unpack_loc_scale(theta)
         return 0, 1, args + (loc, scale)
 
-    def _fitstart(self, data, args=None):
-        """
-        Here, we use the _fitstarts method from the base distribution. Note that using this as an initial guess is a very
-        poor idea. Still, it ensures that each value in the initial guess are valid, i.e.:
-            self._argcheck(theta_0)==True
-        """
-        if self.basedist == stats.uniform:
-            theta_0 = (max(data) / 2, max(data))
-        else:
-            theta_0 = self.basedist._fitstart(data)
-        return theta_0
+    def fit(self, data, *args, **kwargs):
+
+        def _fitstart_extended(data, args=None):
+            theta_0, _ = ht.two_step_method(data, self.basedist, bins=10, **kwargs)
+            return theta_0
+        self._fitstart = _fitstart_extended
+        return super().fit(data, *args, **kwargs)
+
 
     def _moment_error(self, theta, x, data_moments):
         """When the Method of Moments (MM) is used for fit(), _unpack_theta() is incompatible with the way the

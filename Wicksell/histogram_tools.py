@@ -1,5 +1,5 @@
 import numpy as np
-from wicksell_transform import from_histogram
+import wicksell_transform as wt
 from scipy.optimize import minimize
 from wickselluniform import cdf_uni
 from scipy import stats
@@ -12,7 +12,7 @@ def _histogram_error(sample, bin_edges, freq, method):
     negative log-likelihood.
     """
     hist = (freq, bin_edges)
-    wh = from_histogram(hist)
+    wh = wt.from_histogram(hist)
     if method.lower() == 'mde':
         return stats.kstest(sample, wh.cdf)[0]
     elif method.lower() == 'mle':
