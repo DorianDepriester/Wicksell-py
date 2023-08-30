@@ -1,3 +1,6 @@
+[![PyPI version](https://badge.fury.io/py/Wicksell.svg)](https://badge.fury.io/py/Wicksell)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/wicksell)
+
 # Wicksell-py
 A Python class for computing Wicksell's transforms of continuous distributions.
 
